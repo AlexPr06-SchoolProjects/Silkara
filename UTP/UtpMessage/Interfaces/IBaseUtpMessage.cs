@@ -2,7 +2,8 @@
 
 public interface IBaseUtpMessage<TActionCode, THeaders, TPayload>
 {
-    TActionCode ActionCode { get; }
-    THeaders Headers { get; }
-    TPayload Payload { get; }
+    TActionCode ActionCode { get; set; }
+    THeaders Headers { get; set; }
+    TPayload Payload { get; set; }
+    void Clear();
 }

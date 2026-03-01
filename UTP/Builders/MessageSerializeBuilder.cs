@@ -1,42 +1,60 @@
-﻿using System.Net.Sockets;
+﻿using System.Text.Json;
 using UTP.Payload;
-using UTP.Helpers;
 using UTP.UtpMessage;
 
 namespace UTP.Builders;
 
-internal class MessageSerializeBuilder<T> : IMessageSerializer<T>
-    where T : IPayload
+internal static class MessageSerializeBuilder
 {
-    private UtpMessage<T> _serialized;
+    public static IMessageSerializer<TPayload> For<TPayload>() 
+        where TPayload : IPayload
+    {
+        return new MessageSerializeBuilder<TPayload>();
+    }
+}
+
+
+internal class MessageSerializeBuilder<TPayload> : IMessageSerializer<TPayload>
+    where TPayload : IPayload
+{
+    private RawUtpMessage _serialized;
 
     public MessageSerializeBuilder()
     {
-        _utpMessage = new UtpMessage<T>();
+        _serialized = new RawUtpMessage();
     }
 
-    public UtpMessage<T> Build()
-    {
-        return _utpMessage;
-    }
+    public RawUtpMessage Build()
+        => _serialized;
 
     public void Reset()
+        => _serialized.Clear();
+   
+
+    public IMessageSerializer<TPayload> SerializeActionCode(UtpMessage<TPayload> utpMessage)
     {
-        _utpMessage = new UtpMessage<T>();
+        _serialized.ActionCode = utpMessage.ActionCode;
+        return this;
     }
 
-    public byte[] SerializeActionCode(UtpMessage<T> utpMessage, NetworkStream networkStream)
+    public IMessageSerializer<TPayload> SerializeHeaders(UtpMessage<TPayload> utpMessage)
     {
-        throw new NotImplementedException();
+       var headers = utpMessage.Headers;
+       byte[] serializedHeaders = JsonSerializer.SerializeToUtf8Bytes(headers);
+        _serialized.Headers = serializedHeaders;
+        return this;
     }
 
-    public byte[] SerializeMetadata(UtpMessage<T> utpMessage, NetworkStream networkStream, StreamWriter streamWriter)
+    public IMessageSerializer<TPayload> SerializePayload(UtpMessage<TPayload> utpMessage)
     {
-        throw new NotImplementedException();
-    }
+        if (utpMessage.Payload is null)
+        {
+            _serialized.Payload = Array.Empty<byte>();
+            return this;
+        }
 
-    public byte[] SerializePayloadStream(UtpMessage<T> utpMessage, NetworkStream networkStream)
-    {
-        throw new NotImplementedException();
+        byte[] payloadBytes = JsonSerializer.SerializeToUtf8Bytes(utpMessage.Payload);
+        _serialized.Payload = payloadBytes;
+        return this;
     }
 }

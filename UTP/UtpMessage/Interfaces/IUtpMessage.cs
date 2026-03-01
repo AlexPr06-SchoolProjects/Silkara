@@ -3,6 +3,6 @@
 namespace UTP.UtpMessage.Interfaces;
 
 public interface IUtpMessage<TPayload> : 
-    IBaseUtpMessage<short, IReadOnlyDictionary<string, string>, TPayload?>
+    IBaseUtpMessage<short, IDictionary<string, string>, TPayload?>
         where TPayload : IPayload
 { }
