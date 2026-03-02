@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using UTP.Builders.Interfaces;
 using UTP.Payload;
 using UTP.UtpMessage;
 
@@ -14,10 +15,10 @@ internal static class MessageSerializeBuilder
 }
 
 
-internal class MessageSerializeBuilder<TPayload> : IMessageSerializer<TPayload>
+internal sealed class MessageSerializeBuilder<TPayload> : IMessageSerializer<TPayload>
     where TPayload : IPayload
 {
-    private RawUtpMessage _serialized;
+    private readonly RawUtpMessage _serialized;
 
     public MessageSerializeBuilder()
     {

@@ -1,16 +1,15 @@
-﻿using System.Net.Sockets;
-using UTP.Payload;
+﻿using UTP.Payload;
 using UTP.UtpMessage;
 
-namespace UTP.Builders;
+namespace UTP.Builders.Interfaces;
 
-internal interface IMessageDeserializer<T> : IDisposable
-    where T : IPayload
+internal interface IMessageDeserializer<TPayload> : IDisposable
+    where TPayload : IPayload
 {
-    public IMessageDeserializer<T> PrepareBuffer();
-    public IMessageDeserializer<T> DeserializeActionCode();
-    public IMessageDeserializer<T> DeserializeHeaders();
-    public IMessageDeserializer<T> DeserializePayload();
-    public UtpMessage<T> Build();
+    public IMessageDeserializer<TPayload> PrepareBuffer();
+    public IMessageDeserializer<TPayload> DeserializeActionCode();
+    public IMessageDeserializer<TPayload> DeserializeHeaders();
+    public IMessageDeserializer<TPayload> DeserializePayload();
+    public UtpMessage<TPayload> Build();
     public void Reset();
 }

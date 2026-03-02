@@ -2,33 +2,24 @@
 using UTP.Builders;
 using UTP.Payload;
 using UTP.UtpMessage;
-using UTP.UtpMessage.Interfaces;
 
 namespace UTP;
 
-public class UtpEngine
+public class UtpEngine(NetworkStream networkStream)
 {
-    private NetworkStream networkStream;
-    private MemoryStream memoryStream = null!;
+    public UtpMessage<TPayload> ReceiveMessage<TPayload>()
+        where TPayload : IPayload
+            => DeserializeMessage<TPayload>(networkStream);
 
-    public UtpEngine(NetworkStream netStream)
+    public void SendMessage<TPayload>(UtpMessage<TPayload> utpMessage)
+        where TPayload : IPayload
     {
-        this.networkStream = netStream;
-    }
-
-    public UtpMessage<T> ReceiveMessage<T>()
-        where T : IPayload
-        => DeserializeMessage<T>(networkStream);
-
-    public void SendMessage<T>(UtpMessage<T> utpMessage)
-        where T : IPayload
-    {
-        IRawUtpMessage serializedMessage = SerializeMessage(utpMessage);
+        RawUtpMessage serializedMessage = SerializeMessage(utpMessage);
         ReadOnlyMemory<byte> buffer = serializedMessage.BuildFullPacket();
         networkStream.Write(buffer.Span);
     }
 
-    private UtpMessage<TPayload> DeserializeMessage<TPayload>(NetworkStream networkStream)
+    private static UtpMessage<TPayload> DeserializeMessage<TPayload>(NetworkStream networkStream)
         where TPayload : IPayload
     {
         using var deserializer = MessageDeserializeBuilder.For<TPayload>(networkStream);
@@ -40,9 +31,9 @@ public class UtpEngine
             .Build();
     }
 
-    private IRawUtpMessage SerializeMessage<T>(UtpMessage<T> utpMessage)
-        where T : IPayload
-        => MessageSerializeBuilder.For<T>()
+    private static RawUtpMessage SerializeMessage<TPayload>(UtpMessage<TPayload> utpMessage)
+        where TPayload : IPayload
+            => MessageSerializeBuilder.For<TPayload>()
                 .SerializeActionCode(utpMessage)
                 .SerializeHeaders(utpMessage)
                 .SerializePayload(utpMessage)

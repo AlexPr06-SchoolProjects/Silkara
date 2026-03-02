@@ -4,7 +4,7 @@ using UTP.UtpMessage.Interfaces;
 
 namespace UTP.UtpMessage;
 
-sealed public class UtpMessage<TPayload> : IUtpMessage<TPayload>
+public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     where TPayload : IPayload
 {
     internal const byte MESSAGE_LEN_LABEL_SIZE = UtpMessageConstants.Sizes.Label;
@@ -12,7 +12,7 @@ sealed public class UtpMessage<TPayload> : IUtpMessage<TPayload>
 
     private byte _freezeFlags = 0;
     private short _actionCode;
-    private Dictionary<string, string> _headers = new(0);
+    private Dictionary<string, string> _headers = [];
     private TPayload? _payload;
 
     public short ActionCode {
@@ -52,22 +52,20 @@ sealed public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     }
 
     public UtpMessage(
-        short actionCode, 
-        Dictionary<string, string> headers,
-        TPayload payload)
-    {
-        ActionCode = actionCode;
-        Headers = headers;
-        Payload = payload;
-    }
-
-    public UtpMessage(
         short actionCode,
         Dictionary<string, string> headers
         )
     {
         ActionCode = actionCode;
         Headers = headers;
+    }
+
+    public UtpMessage(
+        short actionCode, 
+        Dictionary<string, string> headers,
+        TPayload payload) : this(actionCode, headers)
+    {
+        Payload = payload;
     }
 
     public UtpMessage() { }

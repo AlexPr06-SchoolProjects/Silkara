@@ -4,7 +4,7 @@ using UTP.UtpMessage.Interfaces;
 
 namespace UTP.UtpMessage;
 
-internal class RawUtpMessage : IRawUtpMessage
+public class RawUtpMessage : IRawUtpMessage
 {
     private byte _freezeFlags = 0;
     private short _actionCode;
@@ -84,11 +84,11 @@ internal class RawUtpMessage : IRawUtpMessage
         return fullPacket;
     }
 
-    private void AddLenSizeToSpan(Span<byte> span, int totalSize)
+    private static void AddLenSizeToSpan(Span<byte> span, int totalSize)
     {
         int dataLength = totalSize - UtpMessageConstants.Sizes.Label;
         BinaryPrimitives.WriteInt32BigEndian(
-            span.Slice(0, UtpMessageConstants.Sizes.Label), dataLength);
+            span[..UtpMessageConstants.Sizes.Label], dataLength);
     }
 
     private void AddActionCodeToSpan(Span<byte> span)
@@ -98,10 +98,9 @@ internal class RawUtpMessage : IRawUtpMessage
 
     private void AddHeadersToSpan(Span<byte> span)
     {
-        Headers.Span.CopyTo(span.Slice(
-            UtpMessageConstants.Sizes.Label +
-            UtpMessageConstants.Sizes.ActionCode
-        );
+        Headers.Span.CopyTo(span[
+            (UtpMessageConstants.Sizes.Label +
+            UtpMessageConstants.Sizes.ActionCode)..]);
     }
 
     private void AddSeparatorToSpan(Span<byte> span)
@@ -113,11 +112,11 @@ internal class RawUtpMessage : IRawUtpMessage
 
     private void AddPayloadToSpan(Span<byte> span)
     {
-        Payload.Span.CopyTo(span.Slice(
-            UtpMessageConstants.Sizes.Label +
-            sizeof(short) + 
+        Payload.Span.CopyTo(span[
+            (UtpMessageConstants.Sizes.Label +
+            sizeof(short) +
             Headers.Length +
-            UtpMessageConstants.Sizes.HeaderPayloadSeparator)
+            UtpMessageConstants.Sizes.HeaderPayloadSeparator)..]
         );
     }
 }

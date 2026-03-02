@@ -9,7 +9,7 @@ internal static class BinaryHelper
         => BinaryPrimitives.WriteInt16BigEndian(destination, value);
 
     public static void WriteToSpan(int value, Span<byte> destination)
-        => BinaryPrimitives.WriteInt32BigEndian(destination, (short)value);
+        => BinaryPrimitives.WriteInt32BigEndian(destination, value);
 
     public static int ConvertToInt(Span<byte> bytes) 
         => BinaryPrimitives.ReadInt32BigEndian(bytes);
@@ -17,14 +17,14 @@ internal static class BinaryHelper
     public static short ConvertToShort(Span<byte> bytes) 
         => BinaryPrimitives.ReadInt16BigEndian(bytes);
 
-    public static void ReadFromStream(NetworkStream networkStream, Span<byte> buffer)
-        => networkStream.ReadExactly(buffer);
+    public static void ReadFromStream(Stream stream, Span<byte> buffer)
+        => stream.ReadExactly(buffer);
 
 
-    public static int ReadIntFromStream(NetworkStream networkStream)
+    public static int ReadIntFromStream(Stream stream)
     {
         Span<byte> buffer = stackalloc byte[sizeof(int)];
-        ReadFromStream(networkStream, buffer);
+        ReadFromStream(stream, buffer);
         return BinaryPrimitives.ReadInt32BigEndian(buffer);
     }
 }
