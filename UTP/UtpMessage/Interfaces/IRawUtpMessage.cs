@@ -1,7 +1,9 @@
 ﻿namespace UTP.UtpMessage.Interfaces;
 
 public interface IRawUtpMessage:
-    IBaseUtpMessage<short, ReadOnlyMemory<byte>, ReadOnlyMemory<byte>>
+    IBaseUtpMessage<
+        ReadOnlyMemory<byte>, ReadOnlyMemory<byte>, 
+        ReadOnlyMemory<byte>, ReadOnlyMemory<byte>>
 {
     public ReadOnlyMemory<byte> BuildFullPacket();
 }

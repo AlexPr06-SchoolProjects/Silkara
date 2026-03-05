@@ -1,25 +1,24 @@
-﻿using System.Net.Sockets;
-using UTP.Builders;
+﻿using UTP.Builders;
 using UTP.Payload;
 using UTP.UtpMessage;
 
 namespace UTP;
 
-public class UtpEngine(NetworkStream networkStream)
+public class UtpEngine(Stream stream)
 {
     public UtpMessage<TPayload> ReceiveMessage<TPayload>()
         where TPayload : IPayload
-            => DeserializeMessage<TPayload>(networkStream);
+            => DeserializeMessage<TPayload>(stream);
 
     public void SendMessage<TPayload>(UtpMessage<TPayload> utpMessage)
         where TPayload : IPayload
     {
         RawUtpMessage serializedMessage = SerializeMessage(utpMessage);
         ReadOnlyMemory<byte> buffer = serializedMessage.BuildFullPacket();
-        networkStream.Write(buffer.Span);
+        stream.Write(buffer.Span);
     }
 
-    private static UtpMessage<TPayload> DeserializeMessage<TPayload>(NetworkStream networkStream)
+    private static UtpMessage<TPayload> DeserializeMessage<TPayload>(Stream networkStream)
         where TPayload : IPayload
     {
         using var deserializer = MessageDeserializeBuilder.For<TPayload>(networkStream);

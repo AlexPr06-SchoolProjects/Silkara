@@ -6,45 +6,14 @@ namespace UTP.UtpMessage;
 
 public class RawUtpMessage : IRawUtpMessage
 {
-    private byte _freezeFlags = 0;
-    private short _actionCode;
-    private ReadOnlyMemory<byte> _headers;
-    private ReadOnlyMemory<byte> _payload;
-    private ReadOnlyMemory<byte> _fullPacket;
-    public short ActionCode {
-        get => _actionCode; 
-        set
-        {
-            if ((_freezeFlags & 1) != 0) 
-                return;
-            _actionCode = value;
-            _freezeFlags |= 1;
-        }
-    }
-    public ReadOnlyMemory<byte> Headers { 
-        get => _headers;
-        set
-        {
-            if ((_freezeFlags & 2) != 0) 
-                return;
-            _headers = value;
-            _freezeFlags |= 2;
-        } 
-    }
-    public ReadOnlyMemory<byte> Payload {
-        get => _payload;
-        set
-        {
-            if ((_freezeFlags & 4) != 0)
-                return;
-            _payload = value;
-            _freezeFlags |= 4;
-        }
-    }
-    public ReadOnlyMemory<byte> FullPacket => _fullPacket;
+    public ReadOnlyMemory<byte> ActionCode { get; set; }
+    public ReadOnlyMemory<byte> HeadersLen { get; set; }
+    public ReadOnlyMemory<byte> Headers { get; set; }
+    public ReadOnlyMemory<byte> Payload { get; set; }
+    public ReadOnlyMemory<byte> FullPacket { get; private set; }
 
     public RawUtpMessage(
-        short actionCode, 
+        ReadOnlyMemory<byte> actionCode, 
         ReadOnlyMemory<byte> headers, 
         ReadOnlyMemory<byte> payload)
     {
@@ -57,66 +26,60 @@ public class RawUtpMessage : IRawUtpMessage
 
     public void Clear()
     {
-        _freezeFlags = 0;
-        _actionCode = 0;
-        _headers = ReadOnlyMemory<byte>.Empty;
-        _payload = ReadOnlyMemory<byte>.Empty;
-        _fullPacket = ReadOnlyMemory<byte>.Empty;
+        ActionCode = ReadOnlyMemory<byte>.Empty;
+        HeadersLen = ReadOnlyMemory<byte>.Empty;
+        Headers = ReadOnlyMemory<byte>.Empty;
+        Payload = ReadOnlyMemory<byte>.Empty;
+        FullPacket = ReadOnlyMemory<byte>.Empty;
     }
 
     public ReadOnlyMemory<byte> BuildFullPacket()
     {
-        int totalSize = UtpMessageConstants.Sizes.Label +
-            sizeof(short) + 
+        int totalSize = 
+            UtpConstants.Sizes.MessageLen +
+            UtpConstants.Sizes.ActionCodeLen +
+            UtpConstants.Sizes.HeadersLen +
             Headers.Length + 
-            UtpMessageConstants.Sizes.HeaderPayloadSeparator + 
             Payload.Length;
 
         byte[] fullPacket = new byte[totalSize];
-
         Span<byte> fullPacketSpan = fullPacket.AsSpan();
 
-        AddLenSizeToSpan(fullPacketSpan, totalSize);
-        AddActionCodeToSpan(fullPacketSpan);
-        AddHeadersToSpan(fullPacketSpan);
-        AddSeparatorToSpan(fullPacketSpan);
-        AddPayloadToSpan(fullPacket);
-        return fullPacket;
+        int currentOffset = 0;
+        int dataLength = totalSize - UtpConstants.Sizes.MessageLen;
+
+        AddMessageLenToSpan(fullPacketSpan, currentOffset, dataLength);
+        currentOffset += UtpConstants.Sizes.MessageLen;
+
+        AddActionCodeToSpan(fullPacketSpan, currentOffset);
+        currentOffset += UtpConstants.Sizes.ActionCodeLen;
+
+        AddHeadersLenToSpan(fullPacketSpan, currentOffset, Headers.Length);
+        currentOffset += UtpConstants.Sizes.HeadersLen;
+
+        AddHeadersToSpan(fullPacketSpan, currentOffset);
+        currentOffset += Headers.Length;
+
+        AddPayloadToSpan(fullPacketSpan, currentOffset);
+        currentOffset += Payload.Length;
+
+        FullPacket = fullPacket;
+
+        return FullPacket;
     }
 
-    private static void AddLenSizeToSpan(Span<byte> span, int totalSize)
-    {
-        int dataLength = totalSize - UtpMessageConstants.Sizes.Label;
-        BinaryPrimitives.WriteInt32BigEndian(
-            span[..UtpMessageConstants.Sizes.Label], dataLength);
-    }
+    private void AddMessageLenToSpan(Span<byte> span, int startOffset, int length)
+        => BinaryPrimitives.WriteInt32BigEndian(span.Slice(startOffset), length);
 
-    private void AddActionCodeToSpan(Span<byte> span)
-    {
-        BinaryPrimitives.WriteInt16BigEndian(span.Slice(4, 2), _actionCode);
-    }
+    private void AddActionCodeToSpan(Span<byte> span, int startOffset)
+    => ActionCode.Span.CopyTo(span.Slice(startOffset));
 
-    private void AddHeadersToSpan(Span<byte> span)
-    {
-        Headers.Span.CopyTo(span[
-            (UtpMessageConstants.Sizes.Label +
-            UtpMessageConstants.Sizes.ActionCode)..]);
-    }
+    private void AddHeadersLenToSpan(Span<byte> span, int startOffset, int headersLength)
+        => BinaryPrimitives.WriteInt32BigEndian(span.Slice(startOffset), headersLength);
 
-    private void AddSeparatorToSpan(Span<byte> span)
-    {
-        span[UtpMessageConstants.Sizes.Label +
-            sizeof(short) + 
-            Headers.Length] = UtpMessageConstants.Sizes.HeaderPayloadSeparator;
-    }
+    private void AddHeadersToSpan(Span<byte> span, int startOffset)
+        => Headers.Span.CopyTo(span.Slice(startOffset));
 
-    private void AddPayloadToSpan(Span<byte> span)
-    {
-        Payload.Span.CopyTo(span[
-            (UtpMessageConstants.Sizes.Label +
-            sizeof(short) +
-            Headers.Length +
-            UtpMessageConstants.Sizes.HeaderPayloadSeparator)..]
-        );
-    }
+    private void AddPayloadToSpan(Span<byte> span, int startOffset)
+        => Payload.Span.CopyTo(span.Slice(startOffset));
 }

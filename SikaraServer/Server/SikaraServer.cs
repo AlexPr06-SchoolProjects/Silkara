@@ -37,7 +37,7 @@ internal class SikaraServerClass : BackgroundService, IDisposable
             Init();
             await ListenAsync(stoppingToken);
         }
-        catch(Exception ex) when (stoppingToken.IsCancellationRequested)
+        catch when (stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("SikaraServer is stopping due to cancellation request.");
         }

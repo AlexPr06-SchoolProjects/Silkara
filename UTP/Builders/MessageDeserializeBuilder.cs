@@ -1,6 +1,5 @@
 ﻿using System.Buffers;
 using System.Buffers.Binary;
-using System.Net.Sockets;
 using System.Text.Json;
 using UTP.Builders.Interfaces;
 using UTP.Constants;
@@ -12,95 +11,100 @@ namespace UTP.Builders;
 
 internal static class MessageDeserializeBuilder
 {
-    public static IMessageDeserializer<TPayload> For<TPayload>(NetworkStream networkStream) 
+    public static IMessageDeserializer<TPayload> For<TPayload>(Stream stream) 
         where TPayload : IPayload
     {
-        return new MessageDeserializer<TPayload>(networkStream);
+        return new MessageDeserializer<TPayload>(stream);
     }
 }
 
 
-internal sealed class MessageDeserializer<TPayload> 
-    : IMessageDeserializer<TPayload>, 
+internal sealed class MessageDeserializer<TPayload>
+    : IMessageDeserializer<TPayload>,
       IDisposable
         where TPayload : IPayload
 {
-    private NetworkStream _stream = null!;
+    private Stream _stream = null!;
     private byte[]? _rentedBuffer;
     private int _dataLength;
+    private int _headersLength;
+
+    private int _currentOffest;
 
     private short _actionCode;
-    private Dictionary<string, string>? _headers;
+    private Dictionary<string, string> _headers = new();
     private TPayload? _payload;
 
-    public MessageDeserializer(NetworkStream networkStream)
+    public MessageDeserializer(Stream stream)
     {
-        SetStream(networkStream);
+        SetStream(stream);
     }
 
-    public void SetStream(NetworkStream networkStream) 
-        => _stream = networkStream;
+    public void SetStream(Stream stream)
+        => _stream = stream;
 
     public UtpMessage<TPayload> Build()
-    {
-        if (_headers == null || _payload == null)
-            throw new InvalidOperationException("Message not fully deserialized");
-
-        return new UtpMessage<TPayload>(_actionCode, _headers, _payload!);
-    }
+        => new UtpMessage<TPayload>(_actionCode, _headers, _payload!);
 
     public void Reset()
     {
-        _actionCode = default;
-        _headers = null;
-        _payload = default;
+        _stream = null!;
         _rentedBuffer = null;
         _dataLength = default;
+        _headersLength = 0;
+
+        _currentOffest = 0;
+
+        _actionCode = default;
+        _headers?.Clear();
+        _payload = default;
     }
 
     public IMessageDeserializer<TPayload> PrepareBuffer()
     {
-        _dataLength = BinaryHelper.ReadIntFromStream(_stream);
+        _dataLength = DeserializeMessageLen();
         _rentedBuffer = ArrayPool<byte>.Shared.Rent(_dataLength);
-
-        // Read the entire message into the rented buffer
         _stream.ReadExactly(_rentedBuffer.AsSpan(0, _dataLength));
+        _currentOffest = 0;
+
         return this;
     }
 
+    public int DeserializeMessageLen()
+        => BinaryHelper.ReadIntFromStream(_stream);
+    
+
     public IMessageDeserializer<TPayload> DeserializeActionCode()
     {
-        if (!BufferPrepared)
-            throw new InvalidOperationException("Buffer not prepared");
+        ReturnIfBufferIsNotPrepared();
 
-        ReadOnlySpan<byte> span = _rentedBuffer.AsSpan(0, _dataLength);
-        _actionCode = BinaryPrimitives.ReadInt16BigEndian(span[..UtpMessageConstants.Sizes.ActionCode]);
+        ReadOnlySpan<byte> span = _rentedBuffer.AsSpan(_currentOffest, UtpConstants.Sizes.ActionCodeLen);
+        _actionCode = BinaryPrimitives.ReadInt16BigEndian(span);
+        _currentOffest += UtpConstants.Sizes.ActionCodeLen;
 
         return this;
     }
 
     public IMessageDeserializer<TPayload> DeserializeHeaders()
     {
-        if (!BufferPrepared)
-            throw new InvalidOperationException("Buffer not prepared");
+        ReturnIfBufferIsNotPrepared();
 
-        ReadOnlySpan<byte> span = _rentedBuffer.AsSpan(0, _dataLength);
-        int sepIndex = span.IndexOf(UtpMessageConstants.Delimiters.HeaderPayload);
-        var headerSpan = GetHeaderSpan(span, sepIndex);
-        _headers = JsonSerializer.Deserialize<Dictionary<string, string>>(headerSpan);
+        ReadOnlySpan<byte> lenSpan = _rentedBuffer.AsSpan(_currentOffest, UtpConstants.Sizes.HeadersLen);
+        _headersLength = BinaryPrimitives.ReadInt32BigEndian(lenSpan);
+        _currentOffest += UtpConstants.Sizes.HeadersLen;
+        ReadOnlySpan<byte> headersSpan = _rentedBuffer.AsSpan(_currentOffest, _headersLength);
+        _headers = GetHeaders(headersSpan);
+        _currentOffest += _headersLength;
 
         return this;
     }
 
     public IMessageDeserializer<TPayload> DeserializePayload()
     {
-        if (!BufferPrepared)
-            throw new InvalidOperationException("Buffer not prepared");
+        ReturnIfBufferIsNotPrepared();
 
-        ReadOnlySpan<byte> span = _rentedBuffer.AsSpan(0, _dataLength);
-        int sepIndex = span.IndexOf(UtpMessageConstants.Delimiters.HeaderPayload);
-        var payloadSpan = span[(sepIndex + 1)..];
-
+        int remaining = _dataLength - _currentOffest;
+        ReadOnlySpan<byte> payloadSpan = _rentedBuffer.AsSpan(_currentOffest, remaining);
         _payload = JsonSerializer.Deserialize<TPayload>(payloadSpan);
 
         return this;
@@ -114,9 +118,20 @@ internal sealed class MessageDeserializer<TPayload>
             _rentedBuffer = null;
         }
     }
+
     private bool BufferPrepared
         => _rentedBuffer != null;
 
-    private static ReadOnlySpan<byte> GetHeaderSpan(ReadOnlySpan<byte> span, int sepIndex)
-        => span[UtpMessageConstants.Sizes.ActionCode..sepIndex];
+    private void ReturnIfBufferIsNotPrepared()
+    {
+        //TODO: Implement logic if buffer is not prepared
+        // ..
+        // ..
+        //..
+        if (!BufferPrepared)
+            throw new InvalidOperationException("Buffer not prepared");
+    }
+
+    private static Dictionary<string, string> GetHeaders(ReadOnlySpan<byte> span)
+        => JsonSerializer.Deserialize<Dictionary<string, string>>(span)!;
 }
