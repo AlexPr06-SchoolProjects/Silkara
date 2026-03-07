@@ -4,21 +4,17 @@ using UTP.Payload;
 
 namespace UTP.UnitTests.Helpers.Payload;
 
-public record TestPayload(int Id, string Name) : IPayload
+public class TestPayload : IPayload
 {
-    public MemoryStream GetStateStream()
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+
+    public TestPayload() { }
+    public TestPayload(int id, string name) { Id = id; Name = name; }
+
+    public Stream GetStream()
     {
-        string json = JsonSerializer.Serialize(this, new JsonSerializerOptions
-        {
-            WriteIndented = false,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-
-        byte[] stateInBytes = Encoding.UTF8.GetBytes(json);
-
-        MemoryStream memStream = new MemoryStream(stateInBytes.Length);
-        memStream.Write(stateInBytes, 0, stateInBytes.Length);
-
-        return memStream;
+        var json = JsonSerializer.Serialize(this);
+        return new MemoryStream(Encoding.UTF8.GetBytes(json));
     }
 }

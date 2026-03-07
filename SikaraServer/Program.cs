@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SikaraServer.App;
-using SikaraServer.Client;
 using SikaraServer.Client.ClientManagers;
+using SilkaraServer.Client.Interfaces;
 
 HostApplicationBuilder builder = new HostApplicationBuilder(args);
 

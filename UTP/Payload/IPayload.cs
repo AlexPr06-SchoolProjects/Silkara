@@ -2,5 +2,5 @@
 
 public interface IPayload
 {
-    public MemoryStream GetStateStream();
+    public Stream GetStream();
 }

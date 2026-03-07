@@ -1,4 +1,4 @@
-﻿namespace SikaraServer.Client;
+﻿namespace SilkaraServer.Client.Interfaces;
 
 internal interface IClientManager : IDisposable
 {

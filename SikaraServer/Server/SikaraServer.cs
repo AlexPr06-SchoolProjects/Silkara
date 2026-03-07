@@ -2,8 +2,8 @@
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
-using SikaraServer.Client;
 using SikaraServer.Client.ClientIdentities.BasicClientIdentity;
+using SilkaraServer.Client.Interfaces;
 
 namespace SikaraServer.App;
 

@@ -44,7 +44,7 @@ public class BinaryHelperTests
     [InlineData(new byte[] { 0, 255 }, 255)]
     [InlineData(new byte[] { 255, 255 }, -1)]
     [InlineData(new byte[] { 127, 255 }, 32767)]
-    [InlineData(new byte[] { 128, 0 }, -32768)] 
+    [InlineData(new byte[] { 128, 0 }, -32768)]
     [InlineData(new byte[] { 0x01, 0x02 }, 258)]
     public void GetShortFromSpan_ValidData_ReturnsShort(byte[] span, short expected)
     {
@@ -68,8 +68,8 @@ public class BinaryHelperTests
     [InlineData(new byte[] { 0, 0 }, 0)]
     [InlineData(new byte[] { 0, 255 }, 255)]
     [InlineData(new byte[] { 255, 255 }, -1)]
-    [InlineData(new byte[] { 127, 255 }, 32767)] 
-    [InlineData(new byte[] { 128, 0 }, -32768)] 
+    [InlineData(new byte[] { 127, 255 }, 32767)]
+    [InlineData(new byte[] { 128, 0 }, -32768)]
     [InlineData(new byte[] { 0x01, 0x02 }, 258)]
     public void ConvertToShort_ValidBytes_ReturnsCorrectValue(byte[] bytes, short expected)
     {

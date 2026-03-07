@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SikaraServer.App;
 
-namespace SikaraServer.Client;
+namespace SilkaraServer.Client.Interfaces;
 
 internal interface IClientIdentity : IDisposable
 {

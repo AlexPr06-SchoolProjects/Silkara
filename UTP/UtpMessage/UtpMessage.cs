@@ -12,14 +12,14 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     private const string HEADER_PAYLOAD_TYPE_KEY = UtpConstants.Headers.PayloadTypeKey;
     private const string HEADER_PAYLOAD_LEN_KEY = UtpConstants.Headers.PayloadLenKey;
 
-    private IDictionary<string, string> _headers = new Dictionary<string, string>();
+    private IDictionary<string, string>? _headers;
 
     public short ActionCode { get; set; }
 
     public int HeadersLen { get; private set; }
 
     public IDictionary<string, string> Headers { 
-        get => _headers; 
+        get => _headers ??= new Dictionary<string, string>();
         private set
         {
             _headers = value;
@@ -27,13 +27,11 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
         }
     }
 
-    public TPayload? Payload { get; private set; }
-
-    public MemoryStream? PayloadStream { get; private set; } = null;
+    public Stream? PayloadStream { get; private set; }
 
     public UtpMessage(
         short actionCode,
-        Dictionary<string, string> headers
+        Dictionary<string, string>? headers
         )
     {
         ActionCode = actionCode;
@@ -43,8 +41,8 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
 
     public UtpMessage(
         short actionCode, 
-        Dictionary<string, string> headers,
-        TPayload payload) : this(actionCode, headers)
+        Dictionary<string, string>? headers,
+        TPayload? payload) : this(actionCode, headers)
     {
         SetPayload(payload);
     }
@@ -73,34 +71,37 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
             return;
 
         foreach (var kv in headers)
-            _headers[kv.Key] = kv.Value;
+            Headers[kv.Key] = kv.Value;
 
         UpdateHeadersLen();
     }
 
-    // ---------------------- TODO -------------------
     public void SetPayload(TPayload? payload)
     {
-        Payload = payload;
-
         if (payload is not null)
         {
-            PayloadStream = payload.GetStateStream();
-            _headers[HEADER_PAYLOAD_TYPE_KEY] = payload.GetType().Name;
-            _headers[HEADER_PAYLOAD_LEN_KEY] = PayloadStream?.Length.ToString() ?? "0";
+            PayloadStream = payload.GetStream();
+            Headers[HEADER_PAYLOAD_TYPE_KEY] = payload.GetType().Name;
+            Headers[HEADER_PAYLOAD_LEN_KEY] = PayloadStream?.Length.ToString() ?? "0";
         }
         else
         {
             PayloadStream = null;
-            _headers.Remove(HEADER_PAYLOAD_TYPE_KEY);
-            _headers.Remove(HEADER_PAYLOAD_LEN_KEY);
+            Headers.Remove(HEADER_PAYLOAD_TYPE_KEY);
+            Headers.Remove(HEADER_PAYLOAD_LEN_KEY);
         }
         UpdateHeadersLen();
     }
-    // ---------------------- TODO -------------------
 
     private void UpdateHeadersLen()
-        => HeadersLen = JsonSerializer.SerializeToUtf8Bytes(_headers).Length;
+    {
+        if (_headers == null)
+        {
+            HeadersLen = 0;
+            return;
+        }
+        HeadersLen = JsonSerializer.SerializeToUtf8Bytes(_headers).Length;
+    }
 
     private string[] GetChunks(string headerLine)
        => headerLine.Split(
@@ -110,6 +111,10 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
 
     public void Clear()
     {
-        Headers.Clear();
+        ActionCode = default;
+        HeadersLen = default;
+        _headers = null;
+        PayloadStream?.Dispose();
+        PayloadStream = default;
     }
 }

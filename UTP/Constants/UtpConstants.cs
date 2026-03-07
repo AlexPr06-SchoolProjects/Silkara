@@ -19,4 +19,9 @@ internal static class UtpConstants
         public const string PayloadTypeKey = "pType";
         public const string PayloadLenKey = "pLen";
     }
+
+    public static class UtpConnectionConstants
+    {
+        public const int  MINIMUM_BUFFER_SIZE = 1024;
+    }
 }
