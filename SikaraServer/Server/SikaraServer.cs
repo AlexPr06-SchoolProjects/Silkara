@@ -64,26 +64,28 @@ internal class SikaraServerClass : BackgroundService, IDisposable
 
                 IClientIdentity clientIdentity = ClientFactory.Instance.Create(client);
                 _clientManager.AddClient(clientIdentity);
-                Task task = Task.Run(() =>
-                {
-                    try{ clientIdentity.Processing(_logger);}
-                    catch (Exception ex) { _logger.LogError($"ERROR: {ex.Message}"); }
-                    finally
-                    {
-                        var id = clientIdentity.Id;
-                        _clientManager.RemoveClient(clientIdentity.Id);
-                        _logger.LogInformation("Client {ClientId} removed", id);
-                    }
-                }, stoppingToken);
+                var task = HandleClientAsync(clientIdentity, stoppingToken);
 
-                lock(_clientTasks) { _clientTasks.Add(task); }
-                lock(_clientTasks) { _clientTasks.RemoveAll(t => t.IsCompleted); }
+                lock (_clientTasks) { _clientTasks.Add(task); }
+                _ = task.ContinueWith(t => { lock (_clientTasks) { _clientTasks.Remove(t); } });
             }
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Loop stopped due token cancellation.");
                 break;
             }
+        }
+    }
+
+    private async Task HandleClientAsync(IClientIdentity client, CancellationToken token)
+    {
+        try { await client.Processing(_logger, token); }
+        catch (Exception ex) { _logger.LogError($"ERROR: {ex.Message}"); }
+        finally
+        {
+            var id = client.Id;
+            await _clientManager.RemoveClient(client.Id);
+            _logger.LogInformation("Client {ClientId} removed", id);
         }
     }
 
@@ -107,7 +109,7 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         }
         await Task.WhenAny(Task.WhenAll(tasksToWait), Task.Delay(Timeout.Infinite, cancellationToken));
         await base.StopAsync(cancellationToken);
-        _clientManager.Dispose();
+        await _clientManager.DisposeAsync();
         _logger.LogInformation("SikaraServer stopped cleanly(with  StopAsync method).");
     }
 }

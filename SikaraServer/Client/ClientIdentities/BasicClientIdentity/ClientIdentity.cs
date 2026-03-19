@@ -5,15 +5,20 @@ using Microsoft.Extensions.Logging;
 using SikaraServer.App;
 using SilkaraServer.Client.Interfaces;
 using System.Net.Sockets;
-using UTP;
+using System.Text;
+using UTP.Connection;
+using UTP.UtpMessage;
+using UtpTypes;
+using UtpTypes.Actions;
+using UtpTypes.UtpClientType;
 
 namespace SikaraServer.Client.ClientIdentities.BasicClientIdentity;
 
-internal class ClientIdentity : IClientIdentity
+internal class ClientIdentity : IClientIdentity, IAsyncDisposable
 {
     public Guid Id { get; }
     private readonly TcpClient _tcpClient;
-    private NetworkStream _netStream = null!;
+    private UtpClient _utpClient = null!;
     private bool _disposed;
 
     public ClientIdentity(TcpClient tcpClient, Guid id)
@@ -24,65 +29,97 @@ internal class ClientIdentity : IClientIdentity
 
     public bool IsActive => throw new NotImplementedException();
 
-    public void Processing(ILogger<SikaraServerClass> _logger)
+    public async Task Processing(ILogger<SikaraServerClass> _logger, CancellationToken token)
     {
+        InstantiateConnection(_logger);
         try
         {
-            _netStream = _tcpClient.GetStream();
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var received = await _utpClient.ReceiveMessageAsync(token);
 
-            UtpEngine engine = new UtpEngine(_netStream);
+                    _logger.LogInformation("🎉 Сообщение получено!");
 
-            // ------------------------- My olf logic -------------------------
+                    _logger.LogInformation($"Результат: ActionCode: {(ActionCode)received.ActionCode}");
+                    foreach (var header in received.Headers)
+                        _logger.LogInformation($"{header.Key} : {header.Value}");
 
-            // 1. Попытка подключится к конркетному чату ИЛИ создать новый
-            // 3. Подключение к чату
-            // 4.Розрыв связи с SikaraServer
-            using StreamReader reader = new StreamReader(_netStream);
-            using StreamWriter writer = new StreamWriter(_netStream) { AutoFlush = true };
+                    if (received is UtpMessage<JsonPayload> jsonMessage)
+                    {
+                        Console.WriteLine("JSON MESSAGE RECEIVED!");
+                    }
 
-            var data = JsonManager.ReadMessage<SikaraPacket<ChatCreationEnum>, ChatCreationEnum>(reader);
-            _logger.LogInformation("Received data from client({ClientId}): {ClientData}", Id, data);
+                    if (received.PayloadStream is not null)
+                    {
+                        if (received.PayloadStream.CanSeek)
+                            received.PayloadStream.Position = 0;
 
-            // -------------------------- My olf logic -------------------------
-
-            //while (true)
-            //{
-            //    UtpMessage<JsonPayload> message = engine.Receive<JsonPayload>();
-
-            //    // ...
-            //}
-
-            //// ...
-
+                        using var reader = new StreamReader(received.PayloadStream, Encoding.UTF8);
+                        string payloadText = await reader.ReadToEndAsync();
+                        _logger.LogInformation($"{received.Headers["pType"]} - {payloadText}");
+                        if (received is not null && payloadText.Length == int.Parse(received.Headers["pLen"]))
+                            Console.WriteLine("CORRECT! THE RECEIVED PAYLOAD WAS DELIVERED WITHOUT EXTRA_CHANGES.");
+                        else
+                            Console.WriteLine("INCORRECT! THE PAYLOAD LENGTH DOES NOT CORRESPOND TO THE STATED IN HEADERS");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("PayloadStream is null");
+                    }
+                }
+                catch (EndOfStreamException)
+                {
+                    _logger.LogInformation("Client {ClientId} disconnected", Id);
+                    break;
+                }
+                catch (IOException)
+                {
+                    _logger.LogError($"IOException occured while processing Client with ID: {Id}");
+                    break;
+                }
+                catch (SocketException)
+                {
+                    _logger.LogError($"SocketException occured while processing Client with ID: {Id}");
+                    break;
+                }
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error handling client: {ex.Message}");
-        }
-        finally
-        {
-            _tcpClient.Close();
-            _logger.LogInformation("Connection with client {ClientId} closed.", Id);
-        }
+        finally { CloseConnection(_logger); }
     }
 
-    public void Dispose()
+
+
+    private void InstantiateConnection(ILogger<SikaraServerClass> _logger)
+    {        
+        _utpClient = new UtpClient(new UtpConnection(_tcpClient.Client));
+        _logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", Id);
+    }
+
+    private void CloseConnection(ILogger<SikaraServerClass> _logger)
     {
-        Dispose(true);
+        _tcpClient.Close();
+        _logger.LogInformation("Connection with client {ClientId} closed.", Id);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsync(true);
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected virtual async ValueTask DisposeAsync(bool disposing)
     {
         if (_disposed) return;
 
         if (disposing)
         {
-            _netStream?.Dispose();
+            if (_utpClient != null)
+                await _utpClient.DisposeAsync();
             _tcpClient?.Close();
             _tcpClient?.Dispose();
         }
-
         _disposed = true;
     }
 }

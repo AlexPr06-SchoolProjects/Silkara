@@ -1,8 +1,8 @@
 ﻿namespace SilkaraServer.Client.Interfaces;
 
-internal interface IClientManager : IDisposable
+internal interface IClientManager : IAsyncDisposable
 {
     void AddClient(IClientIdentity clientIdentity);
-    void RemoveClient(Guid clientId);
+    Task RemoveClient(Guid clientId);
     IClientIdentity? GetClient(Guid clientId);
 }

@@ -11,16 +11,19 @@ internal class ClientManager : IClientManager
 
     public void AddClient(IClientIdentity clientIdentity)
     {
-        if(_clientIdentities.TryAdd(clientIdentity.Id, clientIdentity))
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ClientManager));
+
+        if (_clientIdentities.TryAdd(clientIdentity.Id, clientIdentity))
             Interlocked.Increment(ref _activeClientsCount);
     }
     
-    public void RemoveClient(Guid clientId)
+    public async Task RemoveClient(Guid clientId)
     {
-        if(_clientIdentities.TryRemove(clientId, out IClientIdentity client))
+        if(_clientIdentities.TryRemove(clientId, out IClientIdentity? client))
             Interlocked.Decrement(ref _activeClientsCount);
         if (client is not null)
-            client.Dispose();
+            await client.DisposeAsync();
     }
     
     public IClientIdentity? GetClient(Guid clientId)
@@ -29,25 +32,28 @@ internal class ClientManager : IClientManager
         return clientIdentity;
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Dispose(true);
+        await DisposeAsync(true);
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected virtual async ValueTask DisposeAsync(bool disposing)
     {
         if (_disposed) return;
 
         if (disposing)
         {
-            foreach (var id in _clientIdentities.Keys)
-                if (_clientIdentities.TryRemove(id, out IClientIdentity? client) && client is not null)
-                    client.Dispose();
+            var tasks = new List<Task>();
+            foreach (var client in _clientIdentities.Values)
+                tasks.Add(client.DisposeAsync().AsTask());
 
             _clientIdentities.Clear();
+
+            await Task.WhenAll(tasks);
         }
 
         _disposed = true;
     }
+
 }

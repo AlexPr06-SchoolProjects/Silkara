@@ -3,8 +3,8 @@ using SikaraServer.App;
 
 namespace SilkaraServer.Client.Interfaces;
 
-internal interface IClientIdentity : IDisposable
+internal interface IClientIdentity : IAsyncDisposable
 {
     Guid Id { get; }
-    void Processing(ILogger<SikaraServerClass> _logger);
+   Task Processing(ILogger<SikaraServerClass> _logger, CancellationToken token);
 }

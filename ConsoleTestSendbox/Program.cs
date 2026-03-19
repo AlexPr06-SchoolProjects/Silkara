@@ -86,7 +86,6 @@ class Test
             {
                 Console.WriteLine("PayloadStream is null");
             }
-
         }
         catch (OperationCanceledException)
         {

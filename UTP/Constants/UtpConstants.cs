@@ -1,6 +1,6 @@
 ﻿namespace UTP.Constants;
 
-internal static class UtpConstants
+public static class UtpConstants
 {
     public static class Sizes
     {
