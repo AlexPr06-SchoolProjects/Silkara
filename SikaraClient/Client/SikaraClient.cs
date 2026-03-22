@@ -31,7 +31,7 @@ internal class SikaraClientClass : BackgroundService
         try
         {
             await ConnectToServerAsync();
-            string bigData = new string('A', 1024 * 1024 * 9);
+            string bigData = new string('A', 1024 * 1024 * 128);
             var bigPayload = new JsonPayload(
     1,
     bigData
