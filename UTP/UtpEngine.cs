@@ -11,9 +11,12 @@ namespace UTP;
 
 public class UtpEngine : IAsyncDisposable
 {
+    private const int MAX_PACKET_SIZE = UtpConstants.UtpConnectionConstants.MAX_PACKET_SIZE;
+
     private readonly UtpConnection _connection;
     private readonly PipeWriter _writer;
     private readonly PipeReader _reader;
+    private readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public UtpEngine(UtpConnection connection)
     {
@@ -29,16 +32,13 @@ public class UtpEngine : IAsyncDisposable
             ReadResult result = await _reader.ReadAsync(ct);
             ReadOnlySequence<byte> buffer = result.Buffer;
 
-            SequencePosition consumed = buffer.Start;
-            SequencePosition examined = buffer.End;
-
-            if (TryParseBeforePayload(ref buffer, out short actionCode, out var headers, out int payloadLength))
+            if (TryParseBeforePayload(ref buffer, out short actionCode, out var headers, out int payloadLength, out var consumedPos))
             {
-                _reader.AdvanceTo(consumed);
+                _reader.AdvanceTo(consumedPos);
                 return (actionCode, headers, payloadLength);
             }
 
-            _reader.AdvanceTo(consumed, examined);
+            _reader.AdvanceTo(buffer.Start, buffer.End);
 
             CheckForExceptions(result, buffer);
         }
@@ -55,16 +55,13 @@ public class UtpEngine : IAsyncDisposable
             ReadResult result = await _reader.ReadAsync(ct);
             ReadOnlySequence<byte> buffer = result.Buffer;
 
-            SequencePosition consumed = buffer.Start;
-            SequencePosition examined = buffer.End;
-
-            if (TryParsePayload<TPayload>(ref buffer, payloadLen, message))
+            if (TryParsePayload<TPayload>(ref buffer, payloadLen, message, out var consumedPos))
             {
-                _reader.AdvanceTo(examined);
+                _reader.AdvanceTo(consumedPos);
                 return message;
             }
 
-            _reader.AdvanceTo(consumed, examined);
+            _reader.AdvanceTo(buffer.Start, buffer.End);
 
             CheckForExceptions(result, buffer);
         }
@@ -87,8 +84,7 @@ public class UtpEngine : IAsyncDisposable
                               UtpConstants.Sizes.HeadersLen +
                               serializedHeaders.Length;
 
-        Memory<byte> memory = _writer.GetMemory(headerBlockSize);
-        Span<byte> span = memory.Span;
+        Span<byte> span = _writer.GetSpan(headerBlockSize);
 
         int offset = 0;
 
@@ -108,7 +104,7 @@ public class UtpEngine : IAsyncDisposable
         {
             if (utpMessage.PayloadStream.CanSeek) 
                 utpMessage.PayloadStream.Position = 0;
-            await utpMessage.PayloadStream.CopyToAsync(_writer, ct);
+            await utpMessage.PayloadStream.CopyToAsync(_writer.AsStream(), ct);
         }
 
         await _writer.FlushAsync(ct);
@@ -118,7 +114,8 @@ public class UtpEngine : IAsyncDisposable
         ref ReadOnlySequence<byte> buffer,
         out short actionCode,
         out Dictionary<string, string> headers,
-        out int payloadLen
+        out int payloadLen,
+        out SequencePosition consumedPos
         )
     {
         actionCode = default;
@@ -126,50 +123,79 @@ public class UtpEngine : IAsyncDisposable
         headers = null!;
 
         var reader = new SequenceReader<byte>(buffer);
+        consumedPos = reader.Position;
 
         if (!reader.TryReadBigEndian(out int packetSize)) return false;
         if (reader.Remaining < packetSize) return false;
+
+        if (packetSize <= 0 || packetSize > MAX_PACKET_SIZE)
+            throw new InvalidDataException("Packet too large");
+
         if (!reader.TryReadBigEndian(out short actionCodeRetrieved)) return false;
         if (!reader.TryReadBigEndian(out int headersLen)) return false;
+
+        if (headersLen < 0 || headersLen > packetSize)
+            throw new InvalidDataException("Invalid headers length");
+
         if (reader.Remaining < headersLen) return false;
 
         ReadOnlySequence<byte> headersData = buffer.Slice(reader.Position, headersLen);
         reader.Advance(headersLen);
         var jsonReader = new Utf8JsonReader(headersData);
         var headersRetrieved = JsonSerializer.Deserialize<Dictionary<string, string>>(ref jsonReader);
-        headers = headersRetrieved ?? new Dictionary<string, string>();
 
+        actionCode = actionCodeRetrieved;
+        headers = headersRetrieved ?? new Dictionary<string, string>();
         payloadLen = packetSize - (UtpConstants.Sizes.ActionCodeLen + UtpConstants.Sizes.HeadersLen + headersLen);
+        consumedPos = reader.Position;
         return true;
     }
 
     private bool TryParsePayload<TPayload>(
        ref ReadOnlySequence<byte> buffer,
        int payloadLen,
-       UtpMessage<TPayload> message)
+       UtpMessage<TPayload> message,
+       out SequencePosition consumedPos
+       )
    where TPayload : IPayload
     {
         var reader = new SequenceReader<byte>(buffer);
+        consumedPos = reader.Position;
 
-        if (payloadLen > 0)
-        {
-            ReadOnlySequence<byte> payloadData = buffer.Slice(reader.Position, payloadLen);
-            var payloadReader = new Utf8JsonReader(payloadData);
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-            TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, options);
-            message.SetPayload(payload);
-            reader.Advance(payloadLen);
-        }
-        buffer = buffer.Slice(reader.Position);
-
-        if (payloadLen == 0)
-            return true;
+        if (payloadLen < 0)
+            throw new InvalidDataException();
 
         if (reader.Remaining < payloadLen)
             return false;
 
-        return false;
+        ReadOnlySequence<byte> payloadData = buffer.Slice(reader.Position, payloadLen);
+        byte[] rented = ArrayPool<byte>.Shared.Rent(payloadLen);
+
+        try
+        {
+            payloadData.CopyTo(rented);
+
+            var payloadReader = new Utf8JsonReader(rented.AsSpan(0, payloadLen));
+            TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, JsonOptions);
+            message.SetPayload(payload);
+            reader.Advance(payloadLen);
+
+            consumedPos = reader.Position;
+
+            return true;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException($"Invalid payload JSON : {ex.Message}");
+        }
+        catch (Exception ex) {
+            throw new InvalidDataException($"ERROR: {ex.Message}"); 
+        }
+        finally
+        {
+            Array.Clear(rented, 0, payloadLen);
+            ArrayPool<byte>.Shared.Return(rented);
+        }
     }
 
     private void CheckForExceptions(ReadResult result, ReadOnlySequence<byte> buffer)

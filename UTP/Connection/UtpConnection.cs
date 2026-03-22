@@ -20,15 +20,15 @@ public class UtpConnection : IAsyncDisposable
         _socket = socket;
         _receivePipe = new Pipe(options);
         _sendPipe = new Pipe(options);
-        _ = ReceiveAsync(_socket, _receivePipe.Writer, _cts.Token);
-        _ = ReadAsync(_socket, _sendPipe.Reader, _cts.Token);
+        _ = FillPipeAsync(_socket, _receivePipe.Writer, _cts.Token);
+        _ = ReadPipeAsync(_socket, _sendPipe.Reader, _cts.Token);
     }
 
     public PipeReader Reader => _receivePipe.Reader;
 
     public PipeWriter Writer => _sendPipe.Writer;
 
-    private async Task ReceiveAsync(Socket socket, PipeWriter writer, CancellationToken ct)
+    private async Task FillPipeAsync(Socket socket, PipeWriter writer, CancellationToken ct)
     {
         try
         {
@@ -47,7 +47,7 @@ public class UtpConnection : IAsyncDisposable
         finally { await writer.CompleteAsync(); }
     }
 
-    private async Task ReadAsync(Socket socket, PipeReader reader, CancellationToken ct)
+    private async Task ReadPipeAsync(Socket socket, PipeReader reader, CancellationToken ct)
     {
         try
         {
@@ -56,11 +56,25 @@ public class UtpConnection : IAsyncDisposable
                 ReadResult result = await reader.ReadAsync(ct);
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
-                foreach(ReadOnlyMemory<byte> segment in buffer)
-                    await socket.SendAsync(segment, SocketFlags.None, ct);
+                if (buffer.IsEmpty)
+                {
+                    if (result.IsCompleted) break;
+                    continue;
+                }
+
+                foreach (ReadOnlyMemory<byte> segment in buffer)
+                {
+                    int sent = 0;
+                    while (sent < segment.Length)
+                    {
+                        int lastSent = await socket.SendAsync(segment.Slice(sent), SocketFlags.None, ct);
+                        if (lastSent <= 0) break;
+                        sent += lastSent;
+                    }
+                }   
 
                 reader.AdvanceTo(buffer.End);
-                if (result.IsCompleted) break;
+                if (result.IsCompleted || result.IsCanceled) break;
             }
         }
         catch (OperationCanceledException) { }
@@ -70,8 +84,7 @@ public class UtpConnection : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _cts.Cancel();
-        _socket.Close();
+        _socket.Shutdown(SocketShutdown.Both);
         _socket.Dispose();
         _cts.Dispose();
         await Task.CompletedTask;

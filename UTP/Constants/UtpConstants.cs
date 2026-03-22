@@ -22,6 +22,7 @@ public static class UtpConstants
 
     public static class UtpConnectionConstants
     {
-        public const int  MINIMUM_BUFFER_SIZE = 1024;
+        public const int  MINIMUM_BUFFER_SIZE = 512;
+        public const int MAX_PACKET_SIZE = 10 * 1024 * 1024; // 1MB
     }
 }

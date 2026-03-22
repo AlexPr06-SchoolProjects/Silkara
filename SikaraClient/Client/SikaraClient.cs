@@ -31,12 +31,24 @@ internal class SikaraClientClass : BackgroundService
         try
         {
             await ConnectToServerAsync();
-            string bigData = new string('A', 100);
-            var bigPayload = new JsonPayload(1, bigData);
+            string bigData = new string('A', 1023 * 7);
+            var bigPayload = new JsonPayload(
+    1,
+    bigData
+);
 
             var message = new UtpMessage<JsonPayload>(
                 actionCode: (short)ActionCode.Ping,
-                headers: new Dictionary<string, string> { ["Test"] = "BigDataCheck" },
+                headers: new Dictionary<string, string>
+                {
+                    ["Test"] = "BigDataCheck",
+                    ["Mode"] = "Stress",
+                    ["Encoding"] = "utf-8",
+                    ["TraceId"] = Guid.NewGuid().ToString(),
+                    ["User-Agent"] = "UTP-StressClient/1.0",
+                    ["X-Random-1"] = new string('Z', 200),
+                    ["X-Random-2"] = new string('Y', 300),
+                },
                 payload: bigPayload
             );
 
