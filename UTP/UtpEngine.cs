@@ -104,7 +104,7 @@ public class UtpEngine : IAsyncDisposable
         {
             if (utpMessage.PayloadStream.CanSeek) 
                 utpMessage.PayloadStream.Position = 0;
-            await utpMessage.PayloadStream.CopyToAsync(_writer.AsStream(), ct);
+            await utpMessage.PayloadStream.CopyToAsync(_writer, ct);
         }
 
         await _writer.FlushAsync(ct);

@@ -58,7 +58,7 @@ internal class ClientIdentity : IClientIdentity, IAsyncDisposable
 
                         using var reader = new StreamReader(received.PayloadStream, Encoding.UTF8);
                         string payloadText = await reader.ReadToEndAsync();
-                        _logger.LogInformation($"{received.Headers["pType"]} - {payloadText}");
+                        //_logger.LogInformation($"{received.Headers["pType"]} - {payloadText}");
                         if (received is not null && payloadText.Length == int.Parse(received.Headers["pLen"]))
                             Console.WriteLine("CORRECT! THE RECEIVED PAYLOAD WAS DELIVERED WITHOUT EXTRA_CHANGES.");
                         else
