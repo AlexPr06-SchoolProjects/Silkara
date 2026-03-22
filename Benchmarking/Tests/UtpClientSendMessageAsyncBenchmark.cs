@@ -15,8 +15,8 @@ namespace Benchmarking.Tests;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
-[DisassemblyDiagnoser(printSource: true)]
-[HardwareCounters(HardwareCounter.CacheMisses)]
+//[DisassemblyDiagnoser(printSource: true)]
+//[HardwareCounters(HardwareCounter.CacheMisses)]
 [ExceptionDiagnoser]
 [Config(typeof(Config))]
 public class UtpClientSendMessageAsyncBenchmark
@@ -76,9 +76,11 @@ public class UtpClientSendMessageAsyncBenchmark
     [GlobalCleanup]
     public async Task Cleanup()
     {
+        if (_utpClient != null)
+            await _utpClient.DisposeAsync();
+
         _client.Close();
         _server.Stop();
-        await _utpClient.DisposeAsync();
     }
 
     [Benchmark]

@@ -40,7 +40,7 @@ public class UtpClient : IAsyncDisposable
         var messageType = typeof(UtpMessage<>).MakeGenericType(payloadType!);
         var message = Activator.CreateInstance(messageType, new object[] { actionCode, headers });
 
-        var result =  await UtpMessageCacheManager.Execute(
+        var result = await UtpMessageCacheManager.Execute(
                 payloadType!,
                 _engine,
                 payloadLen,
@@ -98,11 +98,11 @@ internal static class UtpMessageCacheManager
         return await handler(utpEngine, payloadLen, message, ct);
     }
 
-    private static Func<UtpEngine, int, object, CancellationToken, Task<object>> CreateDelegate(Type paylaodType)
+    private static Func<UtpEngine, int, object, CancellationToken, Task<object>> CreateDelegate(Type payloadType)
     {
         var method = typeof(UtpEngine)
             .GetMethod(nameof(UtpEngine.ReceivePayloadAsync))!
-            .MakeGenericMethod(paylaodType); // Key moment!
+            .MakeGenericMethod(payloadType); // Key moment!
 
         return async (engine, payloadLen, message, ct) =>
         {

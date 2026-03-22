@@ -71,6 +71,7 @@ public class UtpEngine : IAsyncDisposable
         where TPayload : IPayload
     {
         byte[] serializedHeaders = JsonSerializer.SerializeToUtf8Bytes(utpMessage.Headers);
+
         int payloadLen = (int)(utpMessage.PayloadStream?.Length ?? 0);
 
 
@@ -145,6 +146,7 @@ public class UtpEngine : IAsyncDisposable
         var headersRetrieved = JsonSerializer.Deserialize<Dictionary<string, string>>(ref jsonReader);
 
         actionCode = actionCodeRetrieved;
+
         headers = headersRetrieved ?? new Dictionary<string, string>();
         payloadLen = packetSize - (UtpConstants.Sizes.ActionCodeLen + UtpConstants.Sizes.HeadersLen + headersLen);
         consumedPos = reader.Position;
@@ -169,13 +171,10 @@ public class UtpEngine : IAsyncDisposable
             return false;
 
         ReadOnlySequence<byte> payloadData = buffer.Slice(reader.Position, payloadLen);
-        byte[] rented = ArrayPool<byte>.Shared.Rent(payloadLen);
 
         try
         {
-            payloadData.CopyTo(rented);
-
-            var payloadReader = new Utf8JsonReader(rented.AsSpan(0, payloadLen));
+            var payloadReader = new Utf8JsonReader(payloadData);
             TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, JsonOptions);
             message.SetPayload(payload);
             reader.Advance(payloadLen);
@@ -190,11 +189,6 @@ public class UtpEngine : IAsyncDisposable
         }
         catch (Exception ex) {
             throw new InvalidDataException($"ERROR: {ex.Message}"); 
-        }
-        finally
-        {
-            Array.Clear(rented, 0, payloadLen);
-            ArrayPool<byte>.Shared.Return(rented);
         }
     }
 

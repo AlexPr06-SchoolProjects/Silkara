@@ -29,11 +29,11 @@ public class UtpClientReceiveMessageAsyncBenchmark
         public Config()
         {
             AddJob(Job.Default.WithId("WorkstationGC"));
-            AddJob(Job.Default.WithGcServer(true).WithId("ServerGC"));
+            //AddJob(Job.Default.WithGcServer(true).WithId("ServerGC"));
         }
     }
 
-    [Params(1, 5)] // Уменьшил до 50, так как 100МБ x 5 сообщ. быстро забьют RAM при прогреве
+    [Params(5)] // Уменьшил до 50, так как 100МБ x 5 сообщ. быстро забьют RAM при прогреве
     public int MegabytesAmount;
 
     private UtpClient _serverUtp = null!;
