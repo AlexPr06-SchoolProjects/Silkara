@@ -1,0 +1,92 @@
+﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Diagnostics.Windows;
+using BenchmarkDotNet.Jobs;
+using System.Net;
+using System.Net.Sockets;
+using UTP.Connection;
+using UTP.UtpMessage;
+using UtpTypes;
+using UtpTypes.UtpClientType;
+
+
+namespace Benchmarking.Tests;
+
+[MemoryDiagnoser]
+[ThreadingDiagnoser]
+[DisassemblyDiagnoser(printSource: true)]
+[HardwareCounters(HardwareCounter.CacheMisses)]
+[ExceptionDiagnoser]
+[Config(typeof(Config))]
+public class UtpClientSendMessageAsyncBenchmark
+{
+    private class Config : ManualConfig
+    {
+        public Config()
+        {
+            AddJob(Job.Default.WithId("WorkstationGC"));
+            AddJob(Job.Default.WithGcServer(true).WithId("ServerGC"));
+        }
+    }
+
+    private UtpMessage<JsonPayload>[] _messages = null!;
+    private UtpClient _utpClient = null!;
+    private TcpListener _server = null!;
+    private TcpClient _client = null!;
+
+    [Params(10, 50, 100)]
+    public int MegabytesAmount;
+
+    private const int MessageCount = 5;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        _messages = new UtpMessage<JsonPayload>[MessageCount];
+        int actualPayloadSize = 1024 * 1024 * MegabytesAmount;
+
+        for (int i = 0; i < MessageCount; i++)
+        {
+            string bigData = new string('A', actualPayloadSize);
+            _messages[i] = new UtpMessage<JsonPayload>(
+                actionCode: 1,
+                headers: new Dictionary<string, string> { ["TraceId"] = Guid.NewGuid().ToString() },
+                payload: new JsonPayload(i, bigData)
+            );
+        }
+
+        _server = new TcpListener(IPAddress.Loopback, 0);
+        _server.Start();
+        int port = ((IPEndPoint)_server.LocalEndpoint).Port;
+
+        _client = new TcpClient();
+        _client.Connect(IPAddress.Loopback, port);
+
+        _ = _server.AcceptSocketAsync().ContinueWith(t => {
+            var s = t.Result;
+            byte[] buffer = new byte[65536];
+            while (s.Connected) s.Receive(buffer);
+        });
+
+        var utpConnection = new UtpConnection(_client.Client);
+        _utpClient = new UtpClient(utpConnection);
+    }
+
+    [GlobalCleanup]
+    public async Task Cleanup()
+    {
+        _client.Close();
+        _server.Stop();
+        await _utpClient.DisposeAsync();
+    }
+
+    [Benchmark]
+    public async Task SendBigMessagesAsync()
+    {
+        for (int i = 0; i < _messages.Length; i++)
+        {
+            await _utpClient.SendMessageAsync(_messages[i]);
+        }
+    }
+}

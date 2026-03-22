@@ -7,13 +7,12 @@ using UtpTypes;
 using UtpTypes.Actions;
 using UtpTypes.UtpClientType;
 
-namespace SikaraClient.Client;
 internal class SikaraClientClass : BackgroundService
 {
 	private ILogger<SikaraClientClass> _logger;
 
     private TcpClient _tcpClient;
-    private UtpClient _utpClient;
+    private UtpClient _utpClient = null!;
 
     private string serverIp = "127.0.0.1";
     private int serverPort = 123;
@@ -24,18 +23,18 @@ internal class SikaraClientClass : BackgroundService
         _logger = logger;
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        => await RunCLientAsync(stoppingToken);
+        => await RunClientAsync(stoppingToken);
 
-    private async Task RunCLientAsync(CancellationToken stoppingToken)
+    private async Task RunClientAsync(CancellationToken stoppingToken)
     {
         try
         {
             await ConnectToServerAsync();
             string bigData = new string('A', 1024 * 1024 * 128);
             var bigPayload = new JsonPayload(
-    1,
-    bigData
-);
+                1,
+                bigData
+            );
 
             var message = new UtpMessage<JsonPayload>(
                 actionCode: (short)ActionCode.Ping,

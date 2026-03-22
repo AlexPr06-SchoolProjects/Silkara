@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using UTP.Connection;
 using UTP.UtpMessage;
+using UTP.UtpMessage.Interfaces;
 using UtpTypes;
 using UtpTypes.Actions;
 using UtpTypes.UtpClientType;
@@ -38,7 +39,7 @@ internal class ClientIdentity : IClientIdentity, IAsyncDisposable
             {
                 try
                 {
-                    var received = await _utpClient.ReceiveMessageAsync(token);
+                    IUtpMessage received = await _utpClient.ReceiveMessageAsync(token);
 
                     _logger.LogInformation("🎉 Сообщение получено!");
 
