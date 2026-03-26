@@ -34,6 +34,7 @@ public class UtpClientSendMessageAsyncBenchmark
     private UtpClient _utpClient = null!;
     private TcpListener _server = null!;
     private TcpClient _client = null!;
+    private string _serverIp = "127.0.0.1";
 
     [Params(10, 50, 100)]
     public int MegabytesAmount;
@@ -56,12 +57,12 @@ public class UtpClientSendMessageAsyncBenchmark
             );
         }
 
-        _server = new TcpListener(IPAddress.Loopback, 0);
+        _server = new TcpListener(IPAddress.Parse(_serverIp), 0);
         _server.Start();
         int port = ((IPEndPoint)_server.LocalEndpoint).Port;
 
         _client = new TcpClient();
-        _client.Connect(IPAddress.Loopback, port);
+        _client.Connect(IPAddress.Parse(_serverIp), port);
 
         _ = _server.AcceptSocketAsync().ContinueWith(t => {
             var s = t.Result;
