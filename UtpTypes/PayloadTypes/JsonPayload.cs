@@ -2,7 +2,7 @@
 using System.Text.Json;
 using UTP.Payload;
 
-namespace UtpTypes;
+namespace UtpTypes.PayloadTypes;
 
 public class JsonPayload : IPayload
 {

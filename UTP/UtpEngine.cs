@@ -101,7 +101,7 @@ public class UtpEngine : IAsyncDisposable
         serializedHeaders.CopyTo(span.Slice(offset));
         _writer.Advance(headerBlockSize);
 
-        if (utpMessage.PayloadStream != null)
+        if (utpMessage.PayloadStream != null && utpMessage.PayloadStream != Stream.Null)
         {
             if (utpMessage.PayloadStream.CanSeek) 
                 utpMessage.PayloadStream.Position = 0;

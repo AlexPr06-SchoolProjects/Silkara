@@ -9,8 +9,8 @@ using System.Text;
 using UTP.Connection;
 using UTP.UtpMessage;
 using UTP.UtpMessage.Interfaces;
-using UtpTypes;
 using UtpTypes.Actions;
+using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
 namespace SikaraServer.Client.ClientIdentities.BasicClientIdentity;

@@ -1,10 +1,11 @@
 ﻿using UTP;
 using UTP.Connection;
+using UTP.Constants;
 using UTP.Payload;
 using UTP.UtpMessage;
-using UtpTypes.Dispatchers;
-using UTP.Constants;
 using UTP.UtpMessage.Interfaces;
+using UtpTypes.Dispatchers;
+using UtpTypes.PayloadTypes;
 
 namespace UtpTypes.UtpClientType;
 
@@ -25,11 +26,11 @@ public class UtpClient : IAsyncDisposable
    
     public async Task SendMessageAsync (IUtpMessage utpMessage, CancellationToken ct = default)
     {
-        Type payloadType = GetPayloadTypeFromHeaders(utpMessage.Headers);
+        Type? payloadType = GetPayloadTypeFromHeaders(utpMessage.Headers);
 
         var method = typeof(UtpEngine)
             .GetMethod(nameof(UtpEngine.SendMessageAsync))!
-            .MakeGenericMethod(payloadType!);
+            .MakeGenericMethod(payloadType ?? typeof(EmptyPayload));
 
         await (Task)method.Invoke(_engine, new object[] { utpMessage, ct })!;
     }
@@ -46,30 +47,36 @@ public class UtpClient : IAsyncDisposable
     public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default)
     {
         var (actionCode, headers, payloadLen) = await _engine.ReceiveBeforePayloadAsync();
-        Type payloadType = GetPayloadTypeFromHeaders(headers);
-        var messageType = typeof(UtpMessage<>).MakeGenericType(payloadType!);
+        Type? payloadType = GetPayloadTypeFromHeaders(headers);
+        var messageType = typeof(UtpMessage<>).MakeGenericType(payloadType ?? typeof(EmptyPayload));
         var message = Activator.CreateInstance(messageType, new object[] { actionCode, headers });
 
-        var result = await UtpMessageCacheManager.Execute(
+        object result = message!;
+
+        if (payloadLen > 0) 
+        {
+            if (payloadType == null)
+                throw new Exception("Payload exists but type is missing");
+
+            result = await UtpMessageCacheManager.Execute(
                 payloadType!,
                 _engine,
                 payloadLen,
                 message!,
                 ct
             );
+        }
 
         return (IUtpMessage)result;
     }
 
-    private Type GetPayloadTypeFromHeaders(IDictionary<string, string> headers)
+    private Type? GetPayloadTypeFromHeaders(IDictionary<string, string> headers)
     {
-        string payloadName = headers[HEADER_PAYLOAD_TYPE_KEY];
+        if (!headers.TryGetValue(HEADER_PAYLOAD_TYPE_KEY, out var payloadName))
+            return null;
 
         if (!PayloadDispatcher.TryGetType(payloadName, out var payloadType))
             throw new Exception($"Unknown payload: {payloadName}");
-
-        if (payloadType == null)
-            throw new Exception("Payload type not found");
 
         if (!typeof(IPayload).IsAssignableFrom(payloadType))
             throw new Exception($"Invalid payload type: {payloadType}");

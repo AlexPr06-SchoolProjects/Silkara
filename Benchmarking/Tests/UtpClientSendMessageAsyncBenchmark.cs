@@ -1,13 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Diagnostics.Windows;
 using BenchmarkDotNet.Jobs;
 using System.Net;
 using System.Net.Sockets;
 using UTP.Connection;
 using UTP.UtpMessage;
-using UtpTypes;
+using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
 
@@ -26,17 +25,18 @@ public class UtpClientSendMessageAsyncBenchmark
         public Config()
         {
             AddJob(Job.Default.WithId("WorkstationGC"));
-            AddJob(Job.Default.WithGcServer(true).WithId("ServerGC"));
+            //AddJob(Job.Default.WithGcServer(true).WithId("ServerGC"));
         }
     }
 
     private UtpMessage<JsonPayload>[] _messages = null!;
+    private UtpMessage<EmptyPayload>[] _emptyMessages = null!;
     private UtpClient _utpClient = null!;
     private TcpListener _server = null!;
     private TcpClient _client = null!;
     private string _serverIp = "127.0.0.1";
 
-    [Params(10, 50, 100)]
+    [Params(10, 50)]
     public int MegabytesAmount;
 
     private const int MessageCount = 5;
@@ -45,15 +45,25 @@ public class UtpClientSendMessageAsyncBenchmark
     public void Setup()
     {
         _messages = new UtpMessage<JsonPayload>[MessageCount];
+        _emptyMessages = new UtpMessage<EmptyPayload>[MessageCount];
         int actualPayloadSize = 1024 * 1024 * MegabytesAmount;
 
-        for (int i = 0; i < MessageCount; i++)
+        for (int i = 0; i < MessageCount; ++i)
         {
             string bigData = new string('A', actualPayloadSize);
             _messages[i] = new UtpMessage<JsonPayload>(
                 actionCode: 1,
                 headers: new Dictionary<string, string> { ["TraceId"] = Guid.NewGuid().ToString() },
                 payload: new JsonPayload(i, bigData)
+            );
+        }
+
+        for (int i = 0; i < MessageCount; ++i)
+        {
+            _emptyMessages[i] = new UtpMessage<EmptyPayload>(
+                actionCode: 1,
+                headers: new Dictionary<string, string> { ["TraceId"] = Guid.NewGuid().ToString() },
+                payload: new EmptyPayload()
             );
         }
 
@@ -90,6 +100,15 @@ public class UtpClientSendMessageAsyncBenchmark
         for (int i = 0; i < _messages.Length; i++)
         {
             await _utpClient.SendMessageAsync(_messages[i]);
+        }
+    }
+
+    [Benchmark]
+    public async Task SendMessagesWithEmptyPayloads()
+    {
+        for (int i = 0; i < _emptyMessages.Length; i++)
+        {
+            await _utpClient.SendMessageAsync(_emptyMessages[i]);
         }
     }
 }

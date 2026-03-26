@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using System.Net.Sockets;
 using UTP.Connection;
 using UTP.UtpMessage;
-using UtpTypes;
 using UtpTypes.Actions;
+using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
 internal class SikaraClientClass : BackgroundService

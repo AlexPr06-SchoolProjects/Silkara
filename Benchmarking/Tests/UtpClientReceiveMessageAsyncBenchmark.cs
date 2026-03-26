@@ -11,7 +11,7 @@ using UTP.Constants;
 using UTP.Payload;
 using UTP.UtpMessage;
 using UTP.UtpMessage.Interfaces;
-using UtpTypes;
+using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
 namespace Benchmarking.Tests;
@@ -48,8 +48,14 @@ public class UtpClientReceiveMessageAsyncBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        var payload = new JsonPayload(1, new string('A', 1024 * 1024 * MegabytesAmount));
-        var message = new UtpMessage<JsonPayload>(1, new Dictionary<string, string>(), payload);
+
+        // JSON PAYLAOD 
+        //var payload = new JsonPayload(1, new string('A', 1024 * 1024 * MegabytesAmount));
+        //var message = new UtpMessage<JsonPayload>(1, new Dictionary<string, string>(), payload);
+
+        // EMPTY PAYLAOD
+        var emptyPaylaod = new EmptyPayload();
+        var message = new UtpMessage<EmptyPayload>(1, new Dictionary<string, string>(), emptyPaylaod);
 
         _preSerializedMessage = SerializeToBytes(message);
 
@@ -145,7 +151,7 @@ public class UtpClientReceiveMessageAsyncBenchmark
         serializedHeaders.CopyTo(span.Slice(offset));
         offset += serializedHeaders.Length;
 
-        if (utpMessage.PayloadStream != null)
+        if (utpMessage.PayloadStream != null && utpMessage.PayloadStream != Stream.Null)
         {
             using (var ms = new MemoryStream(result, offset, (int)payloadLen))
             {
