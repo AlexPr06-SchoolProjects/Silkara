@@ -159,10 +159,16 @@ public class UtpEngine : IAsyncDisposable
        UtpMessage<TPayload> message,
        out SequencePosition consumedPos
        )
-   where TPayload : IPayload
+         where TPayload : IPayload
     {
         var reader = new SequenceReader<byte>(buffer);
         consumedPos = reader.Position;
+
+        if (payloadLen == 0)
+        {
+            message.SetPayload(default);
+            return true;
+        }  
 
         if (payloadLen < 0)
             throw new InvalidDataException();
