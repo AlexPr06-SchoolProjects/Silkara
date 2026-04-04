@@ -11,8 +11,6 @@ namespace UTP;
 
 public class UtpEngine : IAsyncDisposable
 {
-    private const int MaxPacketSize = UtpConstants.UtpConnectionConstants.MaxPacketSize;
-
     private readonly UtpConnection _connection;
     private readonly PipeWriter _writer;
     private readonly PipeReader _reader;
@@ -55,7 +53,7 @@ public class UtpEngine : IAsyncDisposable
             ReadResult result = await _reader.ReadAsync(ct);
             ReadOnlySequence<byte> buffer = result.Buffer;
 
-            if (TryParsePayload<TPayload>(ref buffer, payloadLen, message, out var consumedPos))
+            if (TryParsePayload(ref buffer, payloadLen, message, out var consumedPos))
             {
                 _reader.AdvanceTo(consumedPos);
                 return message;
@@ -129,7 +127,7 @@ public class UtpEngine : IAsyncDisposable
         if (!reader.TryReadBigEndian(out int packetSize)) return false;
         if (reader.Remaining < packetSize) return false;
 
-        if (packetSize <= 0 || packetSize > MaxPacketSize)
+        if (packetSize <= 0)
             throw new InvalidDataException("Packet too large");
 
         if (!reader.TryReadBigEndian(out short actionCodeRetrieved)) return false;

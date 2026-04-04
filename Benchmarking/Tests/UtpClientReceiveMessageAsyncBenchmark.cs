@@ -10,7 +10,6 @@ using UTP.Connection;
 using UTP.Constants;
 using UTP.Payload;
 using UTP.UtpMessage;
-using UTP.UtpMessage.Interfaces;
 using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
@@ -35,14 +34,12 @@ public class UtpClientReceiveMessageAsyncBenchmark
 
     [Params(50)] 
     public int MegabytesAmount;
-
-    private UtpClient _serverUtp = null!;
-    private UtpClient _clientUtp = null!;
-    private TcpListener _listener = null!;
-    private TcpClient _serverSideClient = null!;
-    private TcpClient _clientSideClient = null!;
+    private UtpClient? _serverUtp;
+    private UtpClient? _clientUtp;
+    private TcpListener? _listener;
+    private TcpClient? _serverSideClient;
+    private TcpClient? _clientSideClient;
     private CancellationTokenSource? _cts;
-
     private byte[] _preSerializedMessage = null!;
 
     [GlobalSetup]
@@ -54,7 +51,7 @@ public class UtpClientReceiveMessageAsyncBenchmark
         //var message = new UtpMessage<JsonPayload>(1, new Dictionary<string, string>(), payload);
 
         // EMPTY PAYLAOD
-        var emptyPaylaod = new EmptyPayload();
+        var emptyPaylaod = EmptyPayload.Instance;
         var message = new UtpMessage<EmptyPayload>(1, new Dictionary<string, string>(), emptyPaylaod);
 
         _preSerializedMessage = SerializeToBytes(message);
@@ -89,13 +86,14 @@ public class UtpClientReceiveMessageAsyncBenchmark
     [Benchmark]
     public async Task ReceiveMessageAsync()
     {
+        if (_serverUtp == null) return;
         await _serverUtp.ReceiveMessageAsync();
     }
 
     [GlobalCleanup]
     public async Task Cleanup()
     {
-        _cts?.Cancel();
+        _cts?.CancelAsync();
 
         await Task.Delay(50);
         try
@@ -103,7 +101,6 @@ public class UtpClientReceiveMessageAsyncBenchmark
             _clientSideClient?.Dispose();
             _serverSideClient?.Dispose();
             _listener?.Stop();
-
             if (_serverUtp != null) await _serverUtp.DisposeAsync();
             if (_clientUtp != null) await _clientUtp.DisposeAsync();
         }
@@ -153,10 +150,8 @@ public class UtpClientReceiveMessageAsyncBenchmark
 
         if (utpMessage.PayloadStream != null && utpMessage.PayloadStream != Stream.Null)
         {
-            using (var ms = new MemoryStream(result, offset, (int)payloadLen))
-            {
-                utpMessage.PayloadStream.CopyTo(ms);
-            }
+            using var ms = new MemoryStream(result, offset, (int)payloadLen);
+            utpMessage.PayloadStream.CopyTo(ms);
         }
 
         return result;

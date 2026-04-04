@@ -11,7 +11,6 @@ public class UtpConnection : IAsyncDisposable
     private readonly Pipe _receivePipe;
     private readonly Pipe _sendPipe;
     private readonly CancellationTokenSource _cts = new();
-
     private const int MinimumBufferSize = UtpConstants.UtpConnectionConstants.MinimumBufferSize;
 
     public UtpConnection(Socket socket)

@@ -31,14 +31,13 @@ public class UtpClientSendMessageAsyncBenchmark
 
     private UtpMessage<JsonPayload>[] _messages = null!;
     private UtpMessage<EmptyPayload>[] _emptyMessages = null!;
-    private UtpClient _utpClient = null!;
-    private TcpListener _server = null!;
-    private TcpClient _client = null!;
-    private string _serverIp = "127.0.0.1";
-
+    private UtpClient? _utpClient;
+    private TcpListener? _server;
+    private TcpClient? _client;
+    private readonly string _serverIp = "127.0.0.1";
+    
     [Params(10, 50)]
     public int MegabytesAmount;
-
     private const int MessageCount = 5;
 
     [GlobalSetup]
@@ -63,7 +62,7 @@ public class UtpClientSendMessageAsyncBenchmark
             _emptyMessages[i] = new UtpMessage<EmptyPayload>(
                 actionCode: 1,
                 headers: new Dictionary<string, string> { ["TraceId"] = Guid.NewGuid().ToString() },
-                payload: new EmptyPayload()
+                payload: EmptyPayload.Instance
             );
         }
 
@@ -90,25 +89,27 @@ public class UtpClientSendMessageAsyncBenchmark
         if (_utpClient != null)
             await _utpClient.DisposeAsync();
 
-        _client.Close();
-        _server.Stop();
+        _client?.Close();
+        _server?.Stop();
     }
 
     [Benchmark]
     public async Task SendBigMessagesAsync()
     {
-        for (int i = 0; i < _messages.Length; i++)
+        foreach (var t in _messages)
         {
-            await _utpClient.SendMessageAsync(_messages[i]);
+            if (_utpClient != null)
+                await _utpClient.SendMessageAsync(t);
         }
     }
 
     [Benchmark]
     public async Task SendMessagesWithEmptyPayloads()
     {
-        for (int i = 0; i < _emptyMessages.Length; i++)
+        foreach (var t in _emptyMessages)
         {
-            await _utpClient.SendMessageAsync(_emptyMessages[i]);
+            if (_utpClient != null)
+                await _utpClient.SendMessageAsync(t);
         }
     }
 }

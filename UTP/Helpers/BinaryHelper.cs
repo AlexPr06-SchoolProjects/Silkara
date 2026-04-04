@@ -25,7 +25,6 @@ internal static class BinaryHelper
     public static void ReadFromStream(Stream stream, Span<byte> buffer)
         => stream.ReadExactly(buffer);
 
-
     public static int ReadIntFromStream(Stream stream)
     {
         Span<byte> buffer = stackalloc byte[sizeof(int)];

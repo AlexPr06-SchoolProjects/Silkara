@@ -13,10 +13,8 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
 {
     private readonly TcpClient _tcpClient = new TcpClient();
     private UtpClient _utpClient = null!;
-
     private readonly string _serverIp = "127.0.0.1";
     private readonly int _serverPort = 123;
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         => await RunClientAsync(stoppingToken);
 
@@ -63,8 +61,6 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
         _utpClient = new UtpClient(utpConnection);
         logger.LogInformation($"Connected to server at {_serverIp}:{_serverPort}");
     }
-
-
 
     //private async Task RequestChatCreation()
     //{

@@ -7,4 +7,3 @@ public interface IUtpMessage
     IDictionary<string, string> Headers { get; }
     Stream? PayloadStream { get; }
 }
-

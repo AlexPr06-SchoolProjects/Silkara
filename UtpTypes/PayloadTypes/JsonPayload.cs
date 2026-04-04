@@ -8,7 +8,6 @@ public class JsonPayload : IPayload
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
-
     public JsonPayload() { }
     public JsonPayload(int id, string name) { Id = id; Name = name; }
 

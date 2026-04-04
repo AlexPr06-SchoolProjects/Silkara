@@ -1,6 +1,3 @@
 ﻿namespace SilkaraServer.Chat;
 
-internal class BasicChat : IChat
-{
-
-}
+internal class BasicChat : IChat;

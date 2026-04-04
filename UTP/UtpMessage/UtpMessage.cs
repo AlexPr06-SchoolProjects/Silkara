@@ -11,22 +11,10 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     private const char HeaderSeparator = UtpConstants.Delimiters.HeaderKeyValue;
     private const string HeaderPayloadTypeKey = UtpConstants.Headers.PayloadTypeKey;
     private const string HeaderPayloadLenKey = UtpConstants.Headers.PayloadLenKey;
-
     private IDictionary<string, string>? _headers;
-
     public short ActionCode { get; set; }
-
     public int HeadersLen { get; private set; }
-
-    public IDictionary<string, string> Headers { 
-        get => _headers ??= new Dictionary<string, string>();
-        private set
-        {
-            _headers = value;
-            UpdateHeadersLen();
-        }
-    }
-
+    public IDictionary<string, string> Headers => _headers ??= new Dictionary<string, string>();
     public Stream? PayloadStream { get; private set; }
 
     public UtpMessage(
