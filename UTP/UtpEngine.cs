@@ -198,14 +198,12 @@ public class UtpEngine : IAsyncDisposable
 
     private void CheckForExceptions(ReadResult result, ReadOnlySequence<byte> buffer)
     {
-        if (result.IsCompleted)
-        {
-            if (buffer.Length == 0)
-                throw new EndOfStreamException("Client disconnected");
-
-            throw new InvalidOperationException(
-                "Connection closed before message was fully received");
-        }
+        if (!result.IsCompleted) return;
+        if (buffer.IsEmpty)
+            throw new EndOfStreamException("Client disconnected gracefully");
+        throw new InvalidOperationException(
+            $"Connection closed prematurely. Remaining bytes in buffer: {buffer.Length}");
+        
     }
 
     public async ValueTask DisposeAsync()

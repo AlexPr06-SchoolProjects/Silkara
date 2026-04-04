@@ -23,7 +23,7 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
 
     public async Task Processing(ILogger<SikaraServerClass> logger, CancellationToken ct)
     {
-        InstantiateConnection(logger);
+        InstantiateConnection(logger, ct);
         if (_utpClient == null)
         {
             logger.LogError($"Failed to instantiate UtpClient for Client with ID: {Id}");
@@ -60,7 +60,8 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                         if (payloadText.Length == int.Parse(received.Headers["pLen"]))
                             Console.WriteLine("CORRECT! THE RECEIVED PAYLOAD WAS DELIVERED WITHOUT EXTRA_CHANGES.");
                         else
-                            Console.WriteLine("INCORRECT! THE PAYLOAD LENGTH DOES NOT CORRESPOND TO THE STATED IN HEADERS");
+                            Console.WriteLine(
+                                "INCORRECT! THE PAYLOAD LENGTH DOES NOT CORRESPOND TO THE STATED IN HEADERS");
                     }
                     else
                     {
@@ -72,14 +73,24 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                     logger.LogInformation("Client {ClientId} disconnected", Id);
                     break;
                 }
-                catch (IOException)
+                catch (InvalidOperationException ex)
                 {
-                    logger.LogError($"IOException occured while processing Client with ID: {Id}");
+                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
                     break;
                 }
-                catch (SocketException)
+                catch (IOException ex)
                 {
-                    logger.LogError($"SocketException occured while processing Client with ID: {Id}");
+                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
+                    break;
+                }
+                catch (SocketException ex)
+                {
+                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Unexpected error: {ex.Message}. Client with ID: {Id}");
                     break;
                 }
             }
@@ -87,18 +98,34 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         finally { CloseConnection(logger); }
     }
 
-
-
-    private void InstantiateConnection(ILogger<SikaraServerClass> logger)
+    private void InstantiateConnection(ILogger<SikaraServerClass> logger, CancellationToken ct)
     {        
-        _utpClient = new UtpClient(new UtpConnection(tcpClient.Client));
+        _utpClient = new UtpClient(new UtpConnection(tcpClient.Client, ct));
         logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", Id);
     }
 
     private void CloseConnection(ILogger<SikaraServerClass> logger)
     {
-        tcpClient.Close();
-        logger.LogInformation("Connection with client {ClientId} closed.", Id);
+        try 
+        {
+            if (tcpClient.Client.Connected)
+            {
+                tcpClient.Client.Shutdown(SocketShutdown.Both);
+            }
+        }
+        catch (SocketException ex)
+        {
+            logger.LogWarning($"SocketException while shutting down connection for Client {Id}: {ex.Message}");
+        }
+        catch (ObjectDisposedException ex)
+        {
+            logger.LogWarning($"ObjectDisposedException while shutting down connection for Client {Id}: {ex.Message}");
+        }
+        finally 
+        {
+            tcpClient.Close();
+            logger.LogInformation("Connection with client {ClientId} closed.", Id);
+        }
     }
 
     public async ValueTask DisposeAsync()

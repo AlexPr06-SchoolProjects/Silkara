@@ -6,10 +6,15 @@ using SilkaraServer.Client.Interfaces;
 
 HostApplicationBuilder builder = new HostApplicationBuilder(args);
 
+const int shutdownTimeoutSeconds = 6;
 
 #region Adding_Builder_Services
 
 builder.Services.AddSingleton<IClientManager, ClientManager>();
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(shutdownTimeoutSeconds);
+});
 
 #endregion
 

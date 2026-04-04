@@ -10,17 +10,19 @@ public class UtpConnection : IAsyncDisposable
     private readonly Socket _socket;
     private readonly Pipe _receivePipe;
     private readonly Pipe _sendPipe;
-    private readonly CancellationTokenSource _cts = new();
+    private readonly CancellationTokenSource _internalCts;
     private const int MinimumBufferSize = UtpConstants.UtpConnectionConstants.MinimumBufferSize;
 
-    public UtpConnection(Socket socket)
+    public UtpConnection(Socket socket, CancellationToken externalToken = default)
     {
         var options = new PipeOptions(useSynchronizationContext: false);
         _socket = socket;
         _receivePipe = new Pipe(options);
         _sendPipe = new Pipe(options);
-        _ = FillPipeAsync(_socket, _receivePipe.Writer, _cts.Token);
-        _ = ReadPipeAsync(_socket, _sendPipe.Reader, _cts.Token);
+        _internalCts = new CancellationTokenSource();
+        var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(_internalCts.Token, externalToken).Token;
+        _ = FillPipeAsync(_socket, _receivePipe.Writer, linkedToken);
+        _ = ReadPipeAsync(_socket, _sendPipe.Reader, linkedToken);
     }
 
     public PipeReader Reader => _receivePipe.Reader;
@@ -35,13 +37,13 @@ public class UtpConnection : IAsyncDisposable
             {
                 Memory<byte> memory = writer.GetMemory(MinimumBufferSize);
                 int bytesRead = await socket.ReceiveAsync(memory, SocketFlags.None, ct);
-                if (bytesRead == 0) break;
+                if (bytesRead == 0) break; // Socket closed
                 writer.Advance(bytesRead);
                 FlushResult result = await writer.FlushAsync(ct);
                 if (result.IsCompleted) break;
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException ) { }
         finally { await writer.CompleteAsync(); }
     }
 
@@ -81,10 +83,18 @@ public class UtpConnection : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _socket.Shutdown(SocketShutdown.Both);
+        await _internalCts.CancelAsync();
+        try
+        {
+            if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
+        } 
+        catch { /* Socket is already closed */ }
         _socket.Dispose();
-        _cts.Dispose();
-        await Task.CompletedTask;
+        await _receivePipe.Writer.CompleteAsync();
+        await _receivePipe.Reader.CompleteAsync();
+        await _sendPipe.Writer.CompleteAsync();
+        await _sendPipe.Reader.CompleteAsync();
+        _internalCts.Dispose();
     }
 }
 

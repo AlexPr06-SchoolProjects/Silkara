@@ -46,7 +46,7 @@ public class UtpClient : IAsyncDisposable
      TODO: */
     public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default)
     {
-        var (actionCode, headers, payloadLen) = await _engine.ReceiveBeforePayloadAsync();
+        var (actionCode, headers, payloadLen) = await _engine.ReceiveBeforePayloadAsync(ct);
         Type? payloadType = GetPayloadTypeFromHeaders(headers);
         var messageType = typeof(UtpMessage<>).MakeGenericType(payloadType ?? typeof(EmptyPayload));
         var message = Activator.CreateInstance(messageType, [actionCode, headers]);

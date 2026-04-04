@@ -43,6 +43,8 @@ public class UtpClientSendMessageAsyncBenchmark
     [GlobalSetup]
     public void Setup()
     {
+        CancellationTokenSource cts = new CancellationTokenSource();
+        CancellationToken ct = cts.Token;
         _messages = new UtpMessage<JsonPayload>[MessageCount];
         _emptyMessages = new UtpMessage<EmptyPayload>[MessageCount];
         int actualPayloadSize = 1024 * 1024 * MegabytesAmount;
@@ -77,9 +79,9 @@ public class UtpClientSendMessageAsyncBenchmark
             var s = t.Result;
             byte[] buffer = new byte[65536];
             while (s.Connected) s.Receive(buffer);
-        });
+        }, ct);
 
-        var utpConnection = new UtpConnection(_client.Client);
+        var utpConnection = new UtpConnection(_client.Client, ct);
         _utpClient = new UtpClient(utpConnection);
     }
 

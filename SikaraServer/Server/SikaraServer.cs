@@ -14,7 +14,6 @@ internal class SikaraServerClass : BackgroundService
     private readonly TcpListener _listener;
     private readonly ILogger<SikaraServerClass> _logger;
     private readonly List<Task> _clientTasks = new();
-
     private readonly IClientManager _clientManager;
     public SikaraServerClass(ILogger<SikaraServerClass> logger, IClientManager clientManager) {
         _clientManager = clientManager;
@@ -48,7 +47,7 @@ internal class SikaraServerClass : BackgroundService
         finally
         {
             _listener.Stop();
-            _logger.LogInformation("RunServerAsync method has stopped.");
+            _logger.LogInformation("b");
         }
     }
 
@@ -74,6 +73,7 @@ internal class SikaraServerClass : BackgroundService
                 _logger.LogInformation("Loop stopped due token cancellation.");
                 break;
             }
+            finally{ _logger.LogInformation("ListenAsync loop iteration finished."); }
         }
     }
 
@@ -96,18 +96,22 @@ internal class SikaraServerClass : BackgroundService
         _logger.LogInformation($"{DateTime.Now.ToShortTimeString()} New client connected - {ip}:{port}");
     }
 
+    private Task[] GetTasksToWait()
+    {
+        lock(_clientTasks) { return _clientTasks.ToArray(); }
+    }
+
     public override async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("SikaraServer is shutting down gracefully...");
         _listener.Stop();
 
-        Task[] tasksToWait;
-        lock(_clientTasks) { tasksToWait = _clientTasks.ToArray(); }
+        Task[] tasksToWait = GetTasksToWait();
         if (tasksToWait.Length > 0)
         {
             _logger.LogInformation("Waiting for {Count} clients to finish...", tasksToWait.Length);
+            await Task.WhenAny(Task.WhenAll(tasksToWait), Task.Delay(Timeout.Infinite, ct));
         }
-        await Task.WhenAny(Task.WhenAll(tasksToWait), Task.Delay(Timeout.Infinite, ct));
         await base.StopAsync(ct);
         await _clientManager.DisposeAsync();
         _logger.LogInformation("SikaraServer stopped cleanly(with  StopAsync method).");
