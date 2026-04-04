@@ -1,9 +1,9 @@
 ﻿using UtpTypes.Middleware.Delegates;
 using UtpTypes.UtpMessageContext;
 
-namespace UtpTypes.Middleware.MiddlewaresConcrete;
+namespace UtpTypes.Middleware.MiddlewareConcretes;
 
 internal interface IUtpMiddleware
 {
-    Task InvokeAsync(UtpContext ctx, UtpDelegate next);
+    ValueTask InvokeAsync(UtpContext ctx, UtpDelegate next);
 }

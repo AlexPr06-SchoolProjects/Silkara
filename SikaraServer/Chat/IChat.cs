@@ -1,4 +1,4 @@
-﻿namespace SikaraServer.Chat;
+﻿namespace SilkaraServer.Chat;
 
 internal interface IChat
 {

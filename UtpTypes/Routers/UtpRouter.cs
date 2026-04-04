@@ -12,7 +12,7 @@ internal class UtpRouter
         _handlers = handlers.ToDictionary(h => h.ActionCode);
     }
 
-    public async Task RouteAsync(UtpContext ctx)
+    public async ValueTask RouteAsync(UtpContext ctx)
     {
         if (_handlers.TryGetValue(ctx.ActionCode, out var handler)) 
         {

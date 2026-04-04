@@ -4,7 +4,7 @@ namespace UtpTypes.PayloadTypes;
 
 public sealed class EmptyPayload : IPayload
 {
-    private static readonly Stream _emptyStream = Stream.Null;
+    private static readonly Stream EmptyStream = Stream.Null;
     public Stream GetStream()
-        => _emptyStream;
+        => EmptyStream;
 }

@@ -2,4 +2,4 @@
 
 namespace UtpTypes.Middleware.Delegates;
 
-public delegate Task UtpDelegate(UtpContext context);
+public delegate ValueTask UtpDelegate(UtpContext context);

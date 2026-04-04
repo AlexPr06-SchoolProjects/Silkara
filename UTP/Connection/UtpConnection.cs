@@ -12,7 +12,7 @@ public class UtpConnection : IAsyncDisposable
     private readonly Pipe _sendPipe;
     private readonly CancellationTokenSource _cts = new();
 
-    private const int MINIMUM_BUFFER_SIZE = UtpConstants.UtpConnectionConstants.MINIMUM_BUFFER_SIZE;
+    private const int MinimumBufferSize = UtpConstants.UtpConnectionConstants.MinimumBufferSize;
 
     public UtpConnection(Socket socket)
     {
@@ -34,7 +34,7 @@ public class UtpConnection : IAsyncDisposable
         {
             while (!ct.IsCancellationRequested)
             {
-                Memory<byte> memory = writer.GetMemory(MINIMUM_BUFFER_SIZE);
+                Memory<byte> memory = writer.GetMemory(MinimumBufferSize);
                 int bytesRead = await socket.ReceiveAsync(memory, SocketFlags.None, ct);
                 if (bytesRead == 0) break;
                 writer.Advance(bytesRead);
@@ -43,7 +43,6 @@ public class UtpConnection : IAsyncDisposable
             }
         }
         catch (OperationCanceledException) { }
-        catch { }
         finally { await writer.CompleteAsync(); }
     }
 
@@ -78,7 +77,6 @@ public class UtpConnection : IAsyncDisposable
             }
         }
         catch (OperationCanceledException) { }
-        catch { }
         finally { await reader.CompleteAsync(); }
     }
 

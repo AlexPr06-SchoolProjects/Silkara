@@ -1,6 +1,4 @@
-﻿using SikaraServer.Chat;
-
-namespace SikaraServer.Classes;
+﻿namespace SilkaraServer.Chat;
 
 internal class BasicChat : IChat
 {

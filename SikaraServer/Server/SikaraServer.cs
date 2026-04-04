@@ -2,23 +2,23 @@
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
-using SikaraServer.Client.ClientIdentities.BasicClientIdentity;
+using SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
 using SilkaraServer.Client.Interfaces;
 
-namespace SikaraServer.App;
+namespace SilkaraServer.Server;
 
-internal class SikaraServerClass : BackgroundService, IDisposable
+internal class SikaraServerClass : BackgroundService
 {
-    private string serverIp = "127.0.0.1";
-    private int serverPort = 123;
-    private TcpListener _listener;
+    private readonly string _serverIp = "127.0.0.1";
+    private readonly int _serverPort = 123;
+    private readonly TcpListener _listener;
     private readonly ILogger<SikaraServerClass> _logger;
     private readonly List<Task> _clientTasks = new();
 
-    private IClientManager _clientManager;
+    private readonly IClientManager _clientManager;
     public SikaraServerClass(ILogger<SikaraServerClass> logger, IClientManager clientManager) {
         _clientManager = clientManager;
-        _listener = new TcpListener(IPAddress.Parse(serverIp), serverPort);
+        _listener = new TcpListener(IPAddress.Parse(_serverIp), _serverPort);
         _logger = logger;
     }
     public void Init()
@@ -27,17 +27,17 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         _logger.LogInformation("Server is listening...");
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken) => await RunServerAsync(stoppingToken);
+    protected override async Task ExecuteAsync(CancellationToken ct) => await RunServerAsync(ct);
 
-    private async Task RunServerAsync(CancellationToken stoppingToken)
+    private async Task RunServerAsync(CancellationToken ct)
     {
         try
         {
             _logger.LogInformation("SikaraServer is running...");
             Init();
-            await ListenAsync(stoppingToken);
+            await ListenAsync(ct);
         }
-        catch when (stoppingToken.IsCancellationRequested)
+        catch when (ct.IsCancellationRequested)
         {
             _logger.LogInformation("SikaraServer is stopping due to cancellation request.");
         }
@@ -52,22 +52,22 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         }
     }
 
-    private async Task ListenAsync(CancellationToken stoppingToken)
+    private async Task ListenAsync(CancellationToken ct)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
             try
             {
-                TcpClient client = await _listener.AcceptTcpClientAsync(stoppingToken);
-                if (client.Client.RemoteEndPoint is IPEndPoint remoteEP)
-                    LogNewConnectionAsync(remoteEP);
+                TcpClient client = await _listener.AcceptTcpClientAsync(ct);
+                if (client.Client.RemoteEndPoint is IPEndPoint remoteEp)
+                    LogNewConnectionAsync(remoteEp);
 
                 IClientIdentity clientIdentity = ClientFactory.Instance.Create(client);
                 _clientManager.AddClient(clientIdentity);
-                var task = HandleClientAsync(clientIdentity, stoppingToken);
+                var task = HandleClientAsync(clientIdentity, ct);
 
                 lock (_clientTasks) { _clientTasks.Add(task); }
-                _ = task.ContinueWith(t => { lock (_clientTasks) { _clientTasks.Remove(t); } });
+                _ = task.ContinueWith(t => { lock (_clientTasks) { _clientTasks.Remove(t); } }, ct);
             }
             catch (OperationCanceledException)
             {
@@ -77,9 +77,9 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         }
     }
 
-    private async Task HandleClientAsync(IClientIdentity client, CancellationToken token)
+    private async Task HandleClientAsync(IClientIdentity client, CancellationToken ct)
     {
-        try { await client.Processing(_logger, token); }
+        try { await client.Processing(_logger, ct); }
         catch (Exception ex) { _logger.LogError($"ERROR: {ex.Message}"); }
         finally
         {
@@ -89,14 +89,14 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         }
     }
 
-    private void LogNewConnectionAsync(IPEndPoint remoteEP)
+    private void LogNewConnectionAsync(IPEndPoint remoteEp)
     {
-        string ip = remoteEP.Address.ToString();
-        int port = remoteEP.Port;
+        string ip = remoteEp.Address.ToString();
+        int port = remoteEp.Port;
         _logger.LogInformation($"{DateTime.Now.ToShortTimeString()} New client connected - {ip}:{port}");
     }
 
-    public override async Task StopAsync(CancellationToken cancellationToken)
+    public override async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("SikaraServer is shutting down gracefully...");
         _listener.Stop();
@@ -107,8 +107,8 @@ internal class SikaraServerClass : BackgroundService, IDisposable
         {
             _logger.LogInformation("Waiting for {Count} clients to finish...", tasksToWait.Length);
         }
-        await Task.WhenAny(Task.WhenAll(tasksToWait), Task.Delay(Timeout.Infinite, cancellationToken));
-        await base.StopAsync(cancellationToken);
+        await Task.WhenAny(Task.WhenAll(tasksToWait), Task.Delay(Timeout.Infinite, ct));
+        await base.StopAsync(ct);
         await _clientManager.DisposeAsync();
         _logger.LogInformation("SikaraServer stopped cleanly(with  StopAsync method).");
     }

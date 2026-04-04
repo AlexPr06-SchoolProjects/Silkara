@@ -12,7 +12,7 @@ namespace UtpTypes.UtpClientType;
 
 public class UtpClient : IAsyncDisposable
 {
-    private const string HEADER_PAYLOAD_TYPE_KEY = UtpConstants.Headers.PayloadTypeKey;
+    private const string HeaderPayloadTypeKey = UtpConstants.Headers.PayloadTypeKey;
     private readonly UtpEngine _engine;
 
     public UtpClient(UtpConnection connection)
@@ -32,7 +32,7 @@ public class UtpClient : IAsyncDisposable
             .GetMethod(nameof(UtpEngine.SendMessageAsync))!
             .MakeGenericMethod(payloadType ?? typeof(EmptyPayload));
 
-        await (Task)method.Invoke(_engine, new object[] { utpMessage, ct })!;
+        await (Task)method.Invoke(_engine, [utpMessage, ct])!;
     }
 
     /* TODO: 
@@ -43,13 +43,13 @@ public class UtpClient : IAsyncDisposable
     I assume that the problem stems from the approach I chose to convert IPayload to actual Payload type - reflection.
     SHOULD BE REWRITEN WITH MORE EFFICIENT REFLECTION APPROACH. - but it is for future.
 
-     TODO */
+     TODO: */
     public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default)
     {
         var (actionCode, headers, payloadLen) = await _engine.ReceiveBeforePayloadAsync();
         Type? payloadType = GetPayloadTypeFromHeaders(headers);
         var messageType = typeof(UtpMessage<>).MakeGenericType(payloadType ?? typeof(EmptyPayload));
-        var message = Activator.CreateInstance(messageType, new object[] { actionCode, headers });
+        var message = Activator.CreateInstance(messageType, [actionCode, headers]);
 
         object result = message!;
 
@@ -59,7 +59,7 @@ public class UtpClient : IAsyncDisposable
                 throw new Exception("Payload exists but type is missing");
 
             result = await UtpMessageCacheManager.Execute(
-                payloadType!,
+                payloadType,
                 _engine,
                 payloadLen,
                 message!,
@@ -72,7 +72,7 @@ public class UtpClient : IAsyncDisposable
 
     private Type? GetPayloadTypeFromHeaders(IDictionary<string, string> headers)
     {
-        if (!headers.TryGetValue(HEADER_PAYLOAD_TYPE_KEY, out var payloadName))
+        if (!headers.TryGetValue(HeaderPayloadTypeKey, out var payloadName))
             return null;
 
         if (!PayloadDispatcher.TryGetType(payloadName, out var payloadType))
@@ -81,7 +81,7 @@ public class UtpClient : IAsyncDisposable
         if (!typeof(IPayload).IsAssignableFrom(payloadType))
             throw new Exception($"Invalid payload type: {payloadType}");
 
-        return payloadType!;
+        return payloadType;
     }
 
     public async ValueTask DisposeAsync()
@@ -95,8 +95,7 @@ internal static class UtpMessageCacheManager
     // PayloadType -> Func which creates UtpMessage<PayloadType>
     private static readonly Dictionary<
            Type, 
-           Func<UtpEngine, int, object, CancellationToken, Task<object>>
-       > _cache = new();
+           Func<UtpEngine, int, object, CancellationToken, Task<object>>> Cache = new();
 
     public static async Task<object> Execute(
         Type payloadType,
@@ -106,10 +105,10 @@ internal static class UtpMessageCacheManager
         CancellationToken ct
         )
     {
-        if (!_cache.TryGetValue(payloadType, out var handler))
+        if (!Cache.TryGetValue(payloadType, out var handler))
         {
             handler = CreateDelegate(payloadType);
-            _cache.Add(payloadType, handler);
+            Cache.Add(payloadType, handler);
         }
 
         return await handler(utpEngine, payloadLen, message, ct);
@@ -123,12 +122,12 @@ internal static class UtpMessageCacheManager
 
         return async (engine, payloadLen, message, ct) =>
         {
-            var task = (Task)method.Invoke(engine, new object[]
-            {
+            var task = (Task)method.Invoke(engine,
+            [
                 payloadLen,
                 message,
                 ct
-            })!;
+            ])!;
 
             await task;
 

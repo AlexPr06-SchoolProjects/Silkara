@@ -1,18 +1,12 @@
 ﻿using UtpTypes.Middleware.Delegates;
-using UtpTypes.Middleware.MiddlewaresConcrete;
+using UtpTypes.Middleware.MiddlewareConcretes;
 using UtpTypes.Routers;
 
 namespace UtpTypes.Pipelines;
 
-internal class UtpPipeline
+internal class UtpPipeline(UtpRouter router)
 {
     private readonly List<IUtpMiddleware> _middlewares = new();
-    private readonly UtpRouter _router;
-
-    public UtpPipeline(UtpRouter router)
-    {
-        _router = router;
-    }
 
     public void Use(IUtpMiddleware middleware)
     {
@@ -21,7 +15,7 @@ internal class UtpPipeline
 
     public UtpDelegate Build()
     {
-        UtpDelegate pipeline = ctx => _router.RouteAsync(ctx);
+        UtpDelegate pipeline = ctx => router.RouteAsync(ctx);
 
         foreach (var middleware in _middlewares)
         {

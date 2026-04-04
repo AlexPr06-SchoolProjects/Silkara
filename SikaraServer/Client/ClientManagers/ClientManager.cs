@@ -1,13 +1,13 @@
 ﻿using SilkaraServer.Client.Interfaces;
 using System.Collections.Concurrent;
 
-namespace SikaraServer.Client.ClientManagers;
+namespace SilkaraServer.Client.ClientManagers;
 
 internal class ClientManager : IClientManager
 {
     private ConcurrentDictionary<Guid, IClientIdentity> _clientIdentities = new();
-    private int _activeClientsCount = 0;
-    private bool _disposed = false;
+    private int _activeClientsCount;
+    private bool _disposed;
 
     public void AddClient(IClientIdentity clientIdentity)
     {
@@ -55,5 +55,4 @@ internal class ClientManager : IClientManager
 
         _disposed = true;
     }
-
 }

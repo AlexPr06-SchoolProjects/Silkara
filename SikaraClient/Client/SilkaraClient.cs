@@ -7,21 +7,16 @@ using UtpTypes.Actions;
 using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
-internal class SikaraClientClass : BackgroundService
-{
-	private ILogger<SikaraClientClass> _logger;
+namespace SilkaraClient.Client;
 
-    private TcpClient _tcpClient;
+internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : BackgroundService
+{
+    private readonly TcpClient _tcpClient = new TcpClient();
     private UtpClient _utpClient = null!;
 
-    private string serverIp = "127.0.0.1";
-    private int serverPort = 123;
+    private readonly string _serverIp = "127.0.0.1";
+    private readonly int _serverPort = 123;
 
-    public SikaraClientClass(ILogger<SikaraClientClass> logger)
-    {
-        _tcpClient = new TcpClient();
-        _logger = logger;
-    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         => await RunClientAsync(stoppingToken);
 
@@ -51,22 +46,22 @@ internal class SikaraClientClass : BackgroundService
                 payload: bigPayload
             );
 
-            await _utpClient.SendMessageAsync(message);
-            _logger.LogInformation("Message was sent");
+            await _utpClient.SendMessageAsync(message, stoppingToken);
+            logger.LogInformation("Message was sent");
             Console.ReadLine();
         }
         catch (Exception ex)
         {
-            _logger.LogError($"ERROR: {ex.Message}");
+            logger.LogError($"ERROR: {ex.Message}");
         }
     }
 
     private async Task ConnectToServerAsync()
     {
-        await _tcpClient.ConnectAsync(serverIp, serverPort);
+        await _tcpClient.ConnectAsync(_serverIp, _serverPort);
         UtpConnection utpConnection = new UtpConnection(_tcpClient.Client);
         _utpClient = new UtpClient(utpConnection);
-        _logger.LogInformation($"Connected to server at {serverIp}:{serverPort}");
+        logger.LogInformation($"Connected to server at {_serverIp}:{_serverPort}");
     }
 
 

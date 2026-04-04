@@ -8,9 +8,9 @@ namespace UTP.UtpMessage;
 public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     where TPayload : IPayload
 {
-    private const char HEADER_SEPARATOR = UtpConstants.Delimiters.HeaderKeyValue;
-    private const string HEADER_PAYLOAD_TYPE_KEY = UtpConstants.Headers.PayloadTypeKey;
-    private const string HEADER_PAYLOAD_LEN_KEY = UtpConstants.Headers.PayloadLenKey;
+    private const char HeaderSeparator = UtpConstants.Delimiters.HeaderKeyValue;
+    private const string HeaderPayloadTypeKey = UtpConstants.Headers.PayloadTypeKey;
+    private const string HeaderPayloadLenKey = UtpConstants.Headers.PayloadLenKey;
 
     private IDictionary<string, string>? _headers;
 
@@ -81,14 +81,14 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
         if (payload is not null)
         {
             PayloadStream = payload.GetStream();
-            Headers[HEADER_PAYLOAD_TYPE_KEY] = payload.GetType().Name;
-            Headers[HEADER_PAYLOAD_LEN_KEY] = PayloadStream?.Length.ToString() ?? "0";
+            Headers[HeaderPayloadTypeKey] = payload.GetType().Name;
+            Headers[HeaderPayloadLenKey] = PayloadStream?.Length.ToString() ?? "0";
         }
         else
         {
             PayloadStream = null;
-            Headers.Remove(HEADER_PAYLOAD_TYPE_KEY);
-            Headers.Remove(HEADER_PAYLOAD_LEN_KEY);
+            Headers.Remove(HeaderPayloadTypeKey);
+            Headers.Remove(HeaderPayloadLenKey);
         }
         UpdateHeadersLen();
     }
@@ -105,16 +105,16 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
 
     private string[] GetChunks(string headerLine)
        => headerLine.Split(
-               HEADER_SEPARATOR,
+               HeaderSeparator,
                StringSplitOptions.RemoveEmptyEntries |
                StringSplitOptions.TrimEntries);
 
     public void Clear()
     {
-        ActionCode = default;
-        HeadersLen = default;
+        ActionCode = 0;
+        HeadersLen = 0;
         _headers = null;
         PayloadStream?.Dispose();
-        PayloadStream = default;
+        PayloadStream = null;
     }
 }

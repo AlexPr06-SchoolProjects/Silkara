@@ -2,7 +2,7 @@
 using JsonManagerLib.Enums;
 using JsonManagerLib.Records;
 using Microsoft.Extensions.Logging;
-using SikaraServer.App;
+using SilkaraServer.Server;
 using SilkaraServer.Client.Interfaces;
 using System.Net.Sockets;
 using System.Text;
@@ -13,41 +13,38 @@ using UtpTypes.Actions;
 using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 
-namespace SikaraServer.Client.ClientIdentities.BasicClientIdentity;
+namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
 
-internal class ClientIdentity : IClientIdentity, IAsyncDisposable
+internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
 {
-    public Guid Id { get; }
-    private readonly TcpClient _tcpClient;
-    private UtpClient _utpClient = null!;
+    public Guid Id { get; } = id;
+    private UtpClient? _utpClient;
     private bool _disposed;
 
-    public ClientIdentity(TcpClient tcpClient, Guid id)
+    public async Task Processing(ILogger<SikaraServerClass> logger, CancellationToken ct)
     {
-        _tcpClient = tcpClient;
-        Id = id;
-    }
+        InstantiateConnection(logger);
+        if (_utpClient == null)
+        {
+            logger.LogError($"Failed to instantiate UtpClient for Client with ID: {Id}");
+            return;
+        }
 
-    public bool IsActive => throw new NotImplementedException();
-
-    public async Task Processing(ILogger<SikaraServerClass> _logger, CancellationToken token)
-    {
-        InstantiateConnection(_logger);
         try
         {
-            while (!token.IsCancellationRequested)
+            while (!ct.IsCancellationRequested)
             {
                 try
                 {
-                    IUtpMessage received = await _utpClient.ReceiveMessageAsync(token);
+                    IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
 
-                    _logger.LogInformation("🎉 Сообщение получено!");
+                    logger.LogInformation("🎉 Сообщение получено!");
 
-                    _logger.LogInformation($"Результат: ActionCode: {(ActionCode)received.ActionCode}");
+                    logger.LogInformation($"Результат: ActionCode: {(ActionCode)received.ActionCode}");
                     foreach (var header in received.Headers)
-                        _logger.LogInformation($"{header.Key} : {header.Value}");
+                        logger.LogInformation($"{header.Key} : {header.Value}");
 
-                    if (received is UtpMessage<JsonPayload> jsonMessage)
+                    if (received is UtpMessage<JsonPayload>)
                     {
                         Console.WriteLine("JSON MESSAGE RECEIVED!");
                     }
@@ -58,50 +55,50 @@ internal class ClientIdentity : IClientIdentity, IAsyncDisposable
                             received.PayloadStream.Position = 0;
 
                         using var reader = new StreamReader(received.PayloadStream, Encoding.UTF8);
-                        string payloadText = await reader.ReadToEndAsync();
+                        string payloadText = await reader.ReadToEndAsync(ct);
                         //_logger.LogInformation($"{received.Headers["pType"]} - {payloadText}");
-                        if (received is not null && payloadText.Length == int.Parse(received.Headers["pLen"]))
+                        if (payloadText.Length == int.Parse(received.Headers["pLen"]))
                             Console.WriteLine("CORRECT! THE RECEIVED PAYLOAD WAS DELIVERED WITHOUT EXTRA_CHANGES.");
                         else
                             Console.WriteLine("INCORRECT! THE PAYLOAD LENGTH DOES NOT CORRESPOND TO THE STATED IN HEADERS");
                     }
                     else
                     {
-                        _logger.LogInformation("PayloadStream is null");
+                        logger.LogInformation("PayloadStream is null");
                     }
                 }
                 catch (EndOfStreamException)
                 {
-                    _logger.LogInformation("Client {ClientId} disconnected", Id);
+                    logger.LogInformation("Client {ClientId} disconnected", Id);
                     break;
                 }
                 catch (IOException)
                 {
-                    _logger.LogError($"IOException occured while processing Client with ID: {Id}");
+                    logger.LogError($"IOException occured while processing Client with ID: {Id}");
                     break;
                 }
                 catch (SocketException)
                 {
-                    _logger.LogError($"SocketException occured while processing Client with ID: {Id}");
+                    logger.LogError($"SocketException occured while processing Client with ID: {Id}");
                     break;
                 }
             }
         }
-        finally { CloseConnection(_logger); }
+        finally { CloseConnection(logger); }
     }
 
 
 
-    private void InstantiateConnection(ILogger<SikaraServerClass> _logger)
+    private void InstantiateConnection(ILogger<SikaraServerClass> logger)
     {        
-        _utpClient = new UtpClient(new UtpConnection(_tcpClient.Client));
-        _logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", Id);
+        _utpClient = new UtpClient(new UtpConnection(tcpClient.Client));
+        logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", Id);
     }
 
-    private void CloseConnection(ILogger<SikaraServerClass> _logger)
+    private void CloseConnection(ILogger<SikaraServerClass> logger)
     {
-        _tcpClient.Close();
-        _logger.LogInformation("Connection with client {ClientId} closed.", Id);
+        tcpClient.Close();
+        logger.LogInformation("Connection with client {ClientId} closed.", Id);
     }
 
     public async ValueTask DisposeAsync()
@@ -118,8 +115,8 @@ internal class ClientIdentity : IClientIdentity, IAsyncDisposable
         {
             if (_utpClient != null)
                 await _utpClient.DisposeAsync();
-            _tcpClient?.Close();
-            _tcpClient?.Dispose();
+            tcpClient.Close();
+            tcpClient.Dispose();
         }
         _disposed = true;
     }

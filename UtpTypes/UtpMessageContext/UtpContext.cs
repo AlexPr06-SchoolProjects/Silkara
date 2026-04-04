@@ -2,18 +2,10 @@
 
 namespace UtpTypes.UtpMessageContext;
 
-public class UtpContext
+public class UtpContext(Guid clientId, short actionCode, Dictionary<string, string> headers, IPayload payload)
 {
-    public Guid ClientId { get; }
-    public short ActionCode { get; }
-    public IPayload Payload { get; }
-    public Dictionary<string, string> Headers { get; }
-
-    public UtpContext(Guid cLientId, short actionCode, Dictionary<string, string> headers, IPayload payload)
-    {
-        ClientId = cLientId;
-        ActionCode = actionCode;
-        Headers = headers;
-        Payload = payload;
-    }
+    public Guid ClientId { get; } = clientId;
+    public short ActionCode { get; } = actionCode;
+    public Dictionary<string, string> Headers { get; } = headers;
+    public IPayload Payload { get; } = payload;
 }

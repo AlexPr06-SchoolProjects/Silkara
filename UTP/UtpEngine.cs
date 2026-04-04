@@ -11,12 +11,12 @@ namespace UTP;
 
 public class UtpEngine : IAsyncDisposable
 {
-    private const int MAX_PACKET_SIZE = UtpConstants.UtpConnectionConstants.MAX_PACKET_SIZE;
+    private const int MaxPacketSize = UtpConstants.UtpConnectionConstants.MaxPacketSize;
 
     private readonly UtpConnection _connection;
     private readonly PipeWriter _writer;
     private readonly PipeReader _reader;
-    private readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public UtpEngine(UtpConnection connection)
     {
@@ -129,7 +129,7 @@ public class UtpEngine : IAsyncDisposable
         if (!reader.TryReadBigEndian(out int packetSize)) return false;
         if (reader.Remaining < packetSize) return false;
 
-        if (packetSize <= 0 || packetSize > MAX_PACKET_SIZE)
+        if (packetSize <= 0 || packetSize > MaxPacketSize)
             throw new InvalidDataException("Packet too large");
 
         if (!reader.TryReadBigEndian(out short actionCodeRetrieved)) return false;
@@ -181,7 +181,7 @@ public class UtpEngine : IAsyncDisposable
         try
         {
             var payloadReader = new Utf8JsonReader(payloadData);
-            TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, JsonOptions);
+            TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, _jsonOptions);
             message.SetPayload(payload);
             reader.Advance(payloadLen);
 

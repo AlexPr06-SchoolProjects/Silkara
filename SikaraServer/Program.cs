@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SikaraServer.App;
-using SikaraServer.Client.ClientManagers;
+using SilkaraServer.Server;
+using SilkaraServer.Client.ClientManagers;
 using SilkaraServer.Client.Interfaces;
 
 HostApplicationBuilder builder = new HostApplicationBuilder(args);
@@ -12,7 +12,6 @@ HostApplicationBuilder builder = new HostApplicationBuilder(args);
 builder.Services.AddSingleton<IClientManager, ClientManager>();
 
 #endregion
-
 
 builder.Services.AddHostedService<SikaraServerClass>();
 
