@@ -6,6 +6,7 @@ using UTP.Connection;
 using UTP.Constants;
 using UTP.Payload;
 using UTP.UtpMessage;
+using UTP.Exceptions;
 
 namespace UTP;
 
@@ -117,8 +118,8 @@ public class UtpEngine : IAsyncDisposable
         out SequencePosition consumedPos
         )
     {
-        actionCode = default;
-        payloadLen = default;
+        actionCode = 0;
+        payloadLen = 0;
         headers = null!;
 
         var reader = new SequenceReader<byte>(buffer);
@@ -200,10 +201,9 @@ public class UtpEngine : IAsyncDisposable
     {
         if (!result.IsCompleted) return;
         if (buffer.IsEmpty)
-            throw new EndOfStreamException("Client disconnected gracefully");
-        throw new InvalidOperationException(
+            throw new RemotePeerDisconnectedException();
+        throw new ConnectionClosedPrematurelyException(
             $"Connection closed prematurely. Remaining bytes in buffer: {buffer.Length}");
-        
     }
 
     public async ValueTask DisposeAsync()

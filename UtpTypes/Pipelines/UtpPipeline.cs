@@ -4,7 +4,7 @@ using UtpTypes.Routers;
 
 namespace UtpTypes.Pipelines;
 
-internal class UtpPipeline(UtpRouter router)
+public class UtpPipeline(UtpRouter router)
 {
     private readonly List<IUtpMiddleware> _middlewares = new();
 
@@ -15,7 +15,7 @@ internal class UtpPipeline(UtpRouter router)
 
     public UtpDelegate Build()
     {
-        UtpDelegate pipeline = ctx => router.RouteAsync(ctx);
+        UtpDelegate pipeline = router.RouteAsync;
 
         foreach (var middleware in _middlewares)
         {

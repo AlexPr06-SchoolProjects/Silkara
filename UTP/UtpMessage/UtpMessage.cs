@@ -2,6 +2,7 @@
 using UTP.Constants;
 using UTP.Payload;
 using UTP.UtpMessage.Interfaces;
+using UTP.Visitors;
 
 namespace UTP.UtpMessage;
 
@@ -16,6 +17,7 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     public int HeadersLen { get; private set; }
     public IDictionary<string, string> Headers => _headers ??= new Dictionary<string, string>();
     public Stream? PayloadStream { get; private set; }
+    public TPayload? Payload { get; set; }
 
     public UtpMessage(
         short actionCode,
@@ -36,6 +38,11 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     }
 
     public UtpMessage() { }
+
+    public TResult Accept<TResult>(IUtpMessageVisitor<TResult> visitor)
+    {
+        return visitor.Visit(this);
+    }
 
     public void SetHeader(string key, string value)
     {
@@ -68,6 +75,7 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     {
         if (payload is not null)
         {
+            Payload = payload;
             PayloadStream = payload.GetStream();
             Headers[HeaderPayloadTypeKey] = payload.GetType().Name;
             Headers[HeaderPayloadLenKey] = PayloadStream?.Length.ToString() ?? "0";

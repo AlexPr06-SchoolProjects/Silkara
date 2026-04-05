@@ -3,7 +3,7 @@ using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Routers;
 
-internal class UtpRouter
+public class UtpRouter
 {
     private readonly Dictionary<short, IUtpHandler> _handlers;
 

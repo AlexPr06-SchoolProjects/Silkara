@@ -12,7 +12,7 @@ namespace SilkaraClient.Client;
 internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : BackgroundService
 {
     private readonly TcpClient _tcpClient = new TcpClient();
-    private UtpClient _utpClient = null!;
+    private UtpClient? _utpClient;
     private readonly string _serverIp = "127.0.0.1";
     private readonly int _serverPort = 123;
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -47,12 +47,17 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
         }
         catch (OperationCanceledException)
         {
-            logger.LogWarning("Connection attempt was canceled.");
+            logger.LogInformation("Connection attempt was canceled.");
             return;
         }
         catch (Exception ex)
         {
             logger.LogError($"ERROR: {ex.Message}");
+            return;
+        }
+
+        if (_utpClient == null)                    {
+            logger.LogWarning("UtpClient is not initialized.");
             return;
         }
 
@@ -67,12 +72,12 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
                 }
                 catch (OperationCanceledException)
                 {
-                    logger.LogWarning("Connection attempt was canceled.");
+                    logger.LogInformation("Connection attempt was canceled.");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning($"{ex.Message}");
+                    logger.LogError($"{ex.Message}");
                     break;
                 }
                 Console.ReadLine();
@@ -95,12 +100,13 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
         }
         catch (OperationCanceledException)
         {
-            logger.LogWarning("Connection attempt was canceled.");
+            logger.LogInformation("Connection attempt was canceled.");
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            logger.LogWarning("Failed to connect to server at {ServerIp}:{ServerPort}", _serverIp, _serverPort);
+            logger.LogError(@$"Failed to connect to server at {_serverIp}:{_serverPort}\n
+                Exception message: {ex.Message}");
             throw;
         }
     }
@@ -117,8 +123,8 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
             if (_tcpClient.Client is { Connected: true })
                 _tcpClient.Client.Shutdown(SocketShutdown.Send);
         }
-        catch (ObjectDisposedException) { /* Уже закрыто, игнорируем */ }
-        catch (Exception) { /* Сокет мог быть уже в плохом состоянии */ }
+        catch (ObjectDisposedException) { /* Already disposed */ }
+        catch (Exception) { /* Socket might already be in a bad state */ }
         finally
         {
             _tcpClient.Close();

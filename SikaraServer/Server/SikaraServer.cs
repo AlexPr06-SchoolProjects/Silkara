@@ -42,20 +42,20 @@ internal class SikaraServerClass : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error: {ex.Message}");
+            _logger.LogWarning($"Unexpected warning: {ex.Message}");
         }
         finally
         {
             _listener.Stop();
-            _logger.LogInformation("b");
+            _logger.LogInformation("Server stopped.");
         }
     }
 
     private async Task ListenAsync(CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested)
+        try
         {
-            try
+            while (!ct.IsCancellationRequested)
             {
                 TcpClient client = await _listener.AcceptTcpClientAsync(ct);
                 if (client.Client.RemoteEndPoint is IPEndPoint remoteEp)
@@ -68,13 +68,12 @@ internal class SikaraServerClass : BackgroundService
                 lock (_clientTasks) { _clientTasks.Add(task); }
                 _ = task.ContinueWith(t => { lock (_clientTasks) { _clientTasks.Remove(t); } }, ct);
             }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("Loop stopped due token cancellation.");
-                break;
-            }
-            finally{ _logger.LogInformation("ListenAsync loop iteration finished."); }
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Loop stopped due token cancellation.");
+        }
+        finally{ _logger.LogInformation("ListenAsync loop iteration finished."); }
     }
 
     private async Task HandleClientAsync(IClientIdentity client, CancellationToken ct)

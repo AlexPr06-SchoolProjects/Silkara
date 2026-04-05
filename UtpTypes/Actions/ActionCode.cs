@@ -3,6 +3,7 @@
 public enum ActionCode : short
 {
     Ping = 1,
-    Login = 2,
-    SendMessage = 3,
+    Json = 2,
+    Login = 3,
+    SendMessage = 4,
 }

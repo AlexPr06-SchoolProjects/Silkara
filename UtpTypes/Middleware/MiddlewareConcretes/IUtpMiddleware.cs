@@ -3,7 +3,7 @@ using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Middleware.MiddlewareConcretes;
 
-internal interface IUtpMiddleware
+public interface IUtpMiddleware
 {
     ValueTask InvokeAsync(UtpContext ctx, UtpDelegate next);
 }

@@ -1,4 +1,6 @@
-﻿namespace UTP.UtpMessage.Interfaces;
+﻿using UTP.Visitors;
+
+namespace UTP.UtpMessage.Interfaces;
 
 public interface IUtpMessage
 {
@@ -6,4 +8,5 @@ public interface IUtpMessage
     int HeadersLen { get; }
     IDictionary<string, string> Headers { get; }
     Stream? PayloadStream { get; }
+    TResult Accept<TResult>(IUtpMessageVisitor<TResult> visitor);
 }

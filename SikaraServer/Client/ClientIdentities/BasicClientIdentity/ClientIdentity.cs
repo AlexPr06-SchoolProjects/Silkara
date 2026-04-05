@@ -12,6 +12,7 @@ using UTP.UtpMessage.Interfaces;
 using UtpTypes.Actions;
 using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
+using UTP.Exceptions;
 
 namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
 
@@ -26,7 +27,7 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         InstantiateConnection(logger, ct);
         if (_utpClient == null)
         {
-            logger.LogError($"Failed to instantiate UtpClient for Client with ID: {Id}");
+            logger.LogWarning($"Failed to instantiate UtpClient for Client with ID: {Id}");
             return;
         }
 
@@ -68,29 +69,19 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                         logger.LogInformation("PayloadStream is null");
                     }
                 }
-                catch (EndOfStreamException)
+                catch (ConnectionClosedPrematurelyException ex) 
                 {
-                    logger.LogInformation("Client {ClientId} disconnected", Id);
+                    logger.LogInformation($"ConnectionClosedPrematurelyException: {ex.Message}. Client with ID: {Id}");
                     break;
                 }
-                catch (InvalidOperationException ex)
+                catch (RemotePeerDisconnectedException ex)
                 {
-                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
-                    break;
-                }
-                catch (IOException ex)
-                {
-                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
-                    break;
-                }
-                catch (SocketException ex)
-                {
-                    logger.LogWarning($"{ex.Message}. Client with ID: {Id}");
+                    logger.LogInformation($"RemotePeerDisconnectedException: {ex.Message}. Client with ID: {Id}");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"Unexpected error: {ex.Message}. Client with ID: {Id}");
+                    logger.LogError($"Unexpected exception: {ex.Message}. Client with ID: {Id}");
                     break;
                 }
             }
