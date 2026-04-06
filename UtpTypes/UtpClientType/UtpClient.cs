@@ -83,9 +83,6 @@ public class UtpClient : IAsyncDisposable
     {
         var visitor = new ContextCreatorVisitor(clientId, ct);
         UtpContext context = rawMessage.Accept(visitor);
-        // Register context in the service locator for middlewares and handlers down the pipeline
-        StateServiceLocator stateServiceLocator = new();
-        stateServiceLocator.Register(context);
         await pipeline.Build().Invoke(context);
         rawMessage.Dispose();
     }

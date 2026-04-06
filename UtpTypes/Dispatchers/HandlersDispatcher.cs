@@ -1,6 +1,5 @@
 using System.Reflection;
 using UtpTypes.Handlers;
-using UtpTypes.Services;
 
 namespace UtpTypes.Dispatchers;
 
@@ -10,7 +9,7 @@ public class HandlersDispatcher
         new(() => Assembly.GetExecutingAssembly().GetTypes()
             .Where(t => typeof(UtpHandlerBase).IsAssignableFrom(t) 
                         && t is {IsInterface: false, IsAbstract: false})
-            .Select(t => (UtpHandlerBase)Activator.CreateInstance(t, GlobalServiceLocator.Instance)!)
+            .Select(t => (UtpHandlerBase)Activator.CreateInstance(t, [])!)
             .ToDictionary(h => h.ActionCode, h => h));
     public static HandlersDispatcher Instance { get; } = new HandlersDispatcher();
 

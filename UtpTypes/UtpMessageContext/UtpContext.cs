@@ -1,9 +1,11 @@
 ﻿using UTP.Payload;
+using UtpTypes.Services;
 
 namespace UtpTypes.UtpMessageContext;
 
 public class UtpContext : IUtpContext
 {
+    public IServiceLocator? ServiceLocator { get; set; }
     public CancellationToken CancellationToken { get; init; }
     public Guid ClientId { get; }
     public short ActionCode { get; }
@@ -15,6 +17,8 @@ public class UtpContext : IUtpContext
         Dictionary<string, string> headers,
         IPayload payload)
     {
+        ServiceLocator = null;
+        CancellationToken = CancellationToken.None;
         ClientId = Guid.Empty;
         ActionCode = actionCode;
         Headers = headers;

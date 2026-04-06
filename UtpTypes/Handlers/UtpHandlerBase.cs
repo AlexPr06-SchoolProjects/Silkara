@@ -3,10 +3,9 @@ using UtpTypes.Services;
 
 namespace UtpTypes.Handlers;
 
-public abstract class UtpHandlerBase(IServiceLocator serviceLocator) : IUtpHandler
+public abstract class UtpHandlerBase : IUtpHandler
 {
-    protected readonly IServiceLocator ServiceLocator = serviceLocator;
-
+    public UtpHandlerBase() { }
     public abstract short ActionCode { get; }
     public abstract Task HandleAsync(UtpContext ctx);
 } 
