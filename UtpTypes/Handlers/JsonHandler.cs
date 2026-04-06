@@ -3,6 +3,7 @@ using ActionCodes = UtpTypes.Actions.ActionCode;
 
 namespace UtpTypes.Handlers;
 
+// ReSharper disable once UnusedMember.Global
 public class JsonHandler : IUtpHandler
 {
     public short ActionCode => (short)ActionCodes.Json;

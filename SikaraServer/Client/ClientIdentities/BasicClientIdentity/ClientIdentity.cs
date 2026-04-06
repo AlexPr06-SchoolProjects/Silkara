@@ -5,14 +5,13 @@ using Microsoft.Extensions.Logging;
 using SilkaraServer.Server;
 using SilkaraServer.Client.Interfaces;
 using System.Net.Sockets;
-using System.Text;
 using UTP.Connection;
-using UTP.UtpMessage;
 using UTP.UtpMessage.Interfaces;
-using UtpTypes.Actions;
-using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
 using UTP.Exceptions;
+using UtpTypes.Middleware.MiddlewareConcretes;
+using UtpTypes.Pipelines;
+using UtpTypes.Routers;
 
 namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
 
@@ -30,6 +29,9 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
             logger.LogWarning($"Failed to instantiate UtpClient for Client with ID: {Id}");
             return;
         }
+        UtpRouter router = new UtpRouter();
+        UtpPipeline pipeline = new UtpPipeline(router);
+        pipeline.Use(new LoggingMiddleware(logger));
 
         try
         {
@@ -38,36 +40,7 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                 try
                 {
                     IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
-
-                    logger.LogInformation("🎉 Сообщение получено!");
-
-                    logger.LogInformation($"Результат: ActionCode: {(ActionCode)received.ActionCode}");
-                    foreach (var header in received.Headers)
-                        logger.LogInformation($"{header.Key} : {header.Value}");
-
-                    if (received is UtpMessage<JsonPayload>)
-                    {
-                        Console.WriteLine("JSON MESSAGE RECEIVED!");
-                    }
-
-                    if (received.PayloadStream is not null)
-                    {
-                        if (received.PayloadStream.CanSeek)
-                            received.PayloadStream.Position = 0;
-
-                        using var reader = new StreamReader(received.PayloadStream, Encoding.UTF8);
-                        string payloadText = await reader.ReadToEndAsync(ct);
-                        //_logger.LogInformation($"{received.Headers["pType"]} - {payloadText}");
-                        if (payloadText.Length == int.Parse(received.Headers["pLen"]))
-                            Console.WriteLine("CORRECT! THE RECEIVED PAYLOAD WAS DELIVERED WITHOUT EXTRA_CHANGES.");
-                        else
-                            Console.WriteLine(
-                                "INCORRECT! THE PAYLOAD LENGTH DOES NOT CORRESPOND TO THE STATED IN HEADERS");
-                    }
-                    else
-                    {
-                        logger.LogInformation("PayloadStream is null");
-                    }
+                    await _utpClient.HandleMessageAsync(received, pipeline, clientId: Id, ct);
                 }
                 catch (ConnectionClosedPrematurelyException ex) 
                 {

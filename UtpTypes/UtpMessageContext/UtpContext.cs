@@ -4,6 +4,7 @@ namespace UtpTypes.UtpMessageContext;
 
 public class UtpContext : IUtpContext
 {
+    public CancellationToken CancellationToken { get; init; }
     public Guid ClientId { get; }
     public short ActionCode { get; }
     public Dictionary<string, string> Headers { get; }
@@ -29,4 +30,13 @@ public class UtpContext : IUtpContext
         ClientId = clientId;
     }
 
+    public UtpContext(
+        CancellationToken ct,
+        Guid clientId,
+        short actionCode,
+        Dictionary<string, string> headers,
+        IPayload payload) : this(clientId, actionCode, headers, payload)
+    {
+        CancellationToken = ct;
+    }
 }

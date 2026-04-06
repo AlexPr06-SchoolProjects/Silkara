@@ -3,9 +3,9 @@ using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Middleware.MiddlewareConcretes;
 
-internal class RateLimitMiddleware : IUtpMiddleware
+public class RateLimitMiddleware : UtpMiddlewareBase
 {
-    public async ValueTask InvokeAsync(UtpContext ctx, UtpDelegate next)
+    protected override async ValueTask OnInvokeAsync(UtpContext ctx, UtpDelegate next)
     {
         if (TooManyRequests(ctx.ClientId))
             return;

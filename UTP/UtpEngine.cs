@@ -57,6 +57,10 @@ public class UtpEngine : IAsyncDisposable
             if (TryParsePayload(ref buffer, payloadLen, message, out var consumedPos))
             {
                 _reader.AdvanceTo(consumedPos);
+                if (message.PayloadStream != null)
+                {
+                    message.DisposePayloadStream();
+                }
                 return message;
             }
 
@@ -126,7 +130,7 @@ public class UtpEngine : IAsyncDisposable
         consumedPos = reader.Position;
 
         if (!reader.TryReadBigEndian(out int packetSize)) return false;
-        if (reader.Remaining < packetSize) return false;
+        //if (reader.Remaining < packetSize) return false;
 
         if (packetSize <= 0)
             throw new InvalidDataException("Packet too large");
@@ -137,7 +141,7 @@ public class UtpEngine : IAsyncDisposable
         if (headersLen < 0 || headersLen > packetSize)
             throw new InvalidDataException("Invalid headers length");
 
-        if (reader.Remaining < headersLen) return false;
+        if (reader.Remaining < headersLen) return false; // !!! to CHECK!
 
         ReadOnlySequence<byte> headersData = buffer.Slice(reader.Position, headersLen);
         reader.Advance(headersLen);
@@ -181,10 +185,11 @@ public class UtpEngine : IAsyncDisposable
         {
             var payloadReader = new Utf8JsonReader(payloadData);
             TPayload? payload = JsonSerializer.Deserialize<TPayload>(ref payloadReader, _jsonOptions);
-            message.SetPayload(payload);
+            message.SetPayloadWithoutStream(payload);
             reader.Advance(payloadLen);
 
             consumedPos = reader.Position;
+            message.SetPayloadLenToHeaders((int)payloadReader.BytesConsumed);
 
             return true;
         }

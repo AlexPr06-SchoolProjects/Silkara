@@ -27,7 +27,7 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
                 );
 
                 var message = new UtpMessage<JsonPayload>(
-                    actionCode: (short)ActionCode.Ping,
+                    actionCode: (short)ActionCode.Json,
                     headers: new Dictionary<string, string>
                     {
                         ["Test"] = "BigDataCheck",

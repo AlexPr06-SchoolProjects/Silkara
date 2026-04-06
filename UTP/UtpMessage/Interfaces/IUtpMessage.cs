@@ -2,7 +2,7 @@
 
 namespace UTP.UtpMessage.Interfaces;
 
-public interface IUtpMessage
+public interface IUtpMessage : IDisposable
 {
     short ActionCode { get; }
     int HeadersLen { get; }

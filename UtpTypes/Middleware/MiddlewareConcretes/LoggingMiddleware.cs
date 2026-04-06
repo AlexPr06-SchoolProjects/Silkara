@@ -4,9 +4,9 @@ using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Middleware.MiddlewareConcretes;
 
-internal class LoggingMiddleware(ILogger logger) : IUtpMiddleware
+public class LoggingMiddleware(ILogger logger) : UtpMiddlewareBase
 {
-    public async ValueTask InvokeAsync(UtpContext ctx, UtpDelegate next)
+    protected override async ValueTask OnInvokeAsync(UtpContext ctx, UtpDelegate next)
     {
         logger.LogInformation(
         "Client {ClientId} ActionCode {ActionCode}",

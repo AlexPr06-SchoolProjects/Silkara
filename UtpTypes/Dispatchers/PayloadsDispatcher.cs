@@ -3,28 +3,21 @@ using UTP.Payload;
 
 namespace UtpTypes.Dispatchers;
 
-internal static class PayloadDispatcher
+internal static class PayloadsDispatcher
 {
     private static readonly Dictionary<string, Type> PayloadTypes;
 
-    static PayloadDispatcher()
+    static PayloadsDispatcher()
     {
         PayloadTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => typeof(IPayload).IsAssignableFrom(t)
-                        && !t.IsInterface
-                        && !t.IsAbstract)
+                        && t is { IsInterface: false, IsAbstract: false })
             .ToDictionary(
                 t => t.Name,
                 t => t
             );
     }
-
-    public static Type GetType(string payloadName)
-        => PayloadTypes[payloadName];
-
-    public static Type GetType(IPayload payload)
-        => payload.GetType();
 
     public static bool TryGetType(string payloadName, out Type? type)
         => PayloadTypes.TryGetValue(payloadName, out type);

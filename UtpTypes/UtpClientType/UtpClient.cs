@@ -69,15 +69,21 @@ public class UtpClient : IAsyncDisposable
                 ct
             );
         }
-
+        
         return (IUtpMessage)result;
     }
 
-    public async Task HandleIncomingRawMessageAsync(IUtpMessage raMessage, UtpPipeline pipeline, Guid clientId)
+    public async Task HandleMessageAsync(
+        IUtpMessage rawMessage, 
+        UtpPipeline pipeline, 
+        Guid clientId, 
+        CancellationToken ct = default
+        )
     {
-        var visitor = new ContextCreatorVisitor(clientId);
-        UtpContext context = raMessage.Accept(visitor);
+        var visitor = new ContextCreatorVisitor(clientId, ct);
+        UtpContext context = rawMessage.Accept(visitor);
         await pipeline.Build().Invoke(context);
+        rawMessage.Dispose();
     }
 
     private Type? GetPayloadTypeFromHeaders(IDictionary<string, string> headers)
@@ -85,7 +91,7 @@ public class UtpClient : IAsyncDisposable
         if (!headers.TryGetValue(HeaderPayloadTypeKey, out var payloadName))
             return null;
 
-        if (!PayloadDispatcher.TryGetType(payloadName, out var payloadType))
+        if (!PayloadsDispatcher.TryGetType(payloadName, out var payloadType))
             throw new Exception($"Unknown payload: {payloadName}");
 
         if (!typeof(IPayload).IsAssignableFrom(payloadType))

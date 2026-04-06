@@ -89,6 +89,29 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
         UpdateHeadersLen();
     }
 
+    public void SetPayloadWithoutStream(TPayload? payload)
+    {
+        if (payload is not null)
+        {
+            Payload = payload;
+            PayloadStream = null;
+            Headers[HeaderPayloadTypeKey] = payload.GetType().Name;
+        }
+        else
+        {
+            PayloadStream = null;
+            Headers.Remove(HeaderPayloadTypeKey);
+            Headers.Remove(HeaderPayloadLenKey);
+        }
+        UpdateHeadersLen();
+    }
+
+    public void SetPayloadLenToHeaders(int payloadLen)
+    {
+        Headers[HeaderPayloadLenKey] = payloadLen.ToString();
+        UpdateHeadersLen();
+    }
+
     private void UpdateHeadersLen()
     {
         if (_headers == null)
@@ -109,8 +132,34 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     {
         ActionCode = 0;
         HeadersLen = 0;
-        _headers = null;
+        DisposeHeaders();
+        DisposePayloadStream();
+        DisposePayload();
+    }
+
+    public void DisposePayload()
+    {
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        if (Payload is IDisposable disposablePayload)
+            disposablePayload.Dispose();
+        Payload = default;
+    }
+
+    public void DisposePayloadStream()
+    {
         PayloadStream?.Dispose();
         PayloadStream = null;
+    }
+
+    public void DisposeHeaders()
+    {
+        _headers?.Clear();
+        _headers = null;
+        HeadersLen = 0;
+    }
+
+    public void Dispose()
+    {
+        Clear();
     }
 }
