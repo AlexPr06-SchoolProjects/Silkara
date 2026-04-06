@@ -13,6 +13,16 @@ public class HandlersDispatcher
             .ToDictionary(h => h.ActionCode, h => h));
     public static HandlersDispatcher Instance { get; } = new HandlersDispatcher();
 
+    public static void AddHandler(UtpHandlerBase handler)
+    {
+        if (Handlers.Value.ContainsKey(handler.ActionCode))
+            throw new InvalidOperationException($"Handler for action code {handler.ActionCode} already exists.");
+
+        Handlers.Value[handler.ActionCode] = handler;
+    }
+
+    public static void RemoveHandler(short actionCode) => Handlers.Value.Remove(actionCode);
+
     private HandlersDispatcher() { }
 
     public  UtpHandlerBase? TryGetHandler(short actionCode)

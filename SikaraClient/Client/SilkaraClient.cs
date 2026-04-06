@@ -69,6 +69,10 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
                 {
                     await _utpClient.SendMessageAsync(message, ct);
                     logger.LogInformation("Message was sent");
+                    var response = await _utpClient.ReceiveMessageAsync(ct);
+                    logger.LogInformation("Response received.");
+                    logger.LogInformation($"Response ActionCode: {response.ActionCode} " +
+                                          $"Headers: {response.Headers} ");
                 }
                 catch (OperationCanceledException)
                 {

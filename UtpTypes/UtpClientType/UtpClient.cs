@@ -78,11 +78,14 @@ public class UtpClient : IAsyncDisposable
         IUtpMessage rawMessage, 
         UtpPipeline pipeline, 
         Guid clientId, 
+        IServiceLocator? serviceLocator = null,
         CancellationToken ct = default
         )
     {
         var visitor = new ContextCreatorVisitor(clientId, ct);
         UtpContext context = rawMessage.Accept(visitor);
+        if (serviceLocator != null)
+            context.ServiceLocator = serviceLocator;
         await pipeline.Build().Invoke(context);
         rawMessage.Dispose();
     }

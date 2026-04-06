@@ -43,4 +43,11 @@ public class UtpContext : IUtpContext
     {
         CancellationToken = ct;
     }
+
+    public void Dispose()
+    {
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        if (Payload is IDisposable disposablePayload)
+            disposablePayload.Dispose();
+    }
 }

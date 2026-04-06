@@ -19,6 +19,15 @@ internal static class PayloadsDispatcher
             );
     }
 
+    public static void AddType(Type payloadType) 
+        => PayloadTypes[payloadType.Name] = payloadType;
+
+    public static void AddPayload(IPayload payload) 
+        => AddType(payload.GetType());
+
+    public static void RemoveType(string payloadName) 
+        => PayloadTypes.Remove(payloadName);
+
     public static bool TryGetType(string payloadName, out Type? type)
         => PayloadTypes.TryGetValue(payloadName, out type);
 }

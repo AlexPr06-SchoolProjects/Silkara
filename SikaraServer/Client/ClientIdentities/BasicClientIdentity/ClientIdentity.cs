@@ -36,6 +36,9 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         UtpPipeline pipeline = new UtpPipeline(router);
         pipeline.Use(new LoggingMiddleware(GlobalServiceLocator.Instance));
 
+        StateServiceLocator stateServiceLocator = new StateServiceLocator();
+        stateServiceLocator.Register(_utpClient);
+
         try
         {
             while (!ct.IsCancellationRequested)
@@ -43,7 +46,7 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                 try
                 {
                     IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
-                    await _utpClient.HandleMessageAsync(received, pipeline, clientId: Id, ct);
+                    await _utpClient.HandleMessageAsync(received, pipeline, clientId: Id, stateServiceLocator, ct);
                 }
                 catch (ConnectionClosedPrematurelyException ex) 
                 {

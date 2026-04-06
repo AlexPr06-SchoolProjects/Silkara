@@ -2,7 +2,7 @@ using UTP.Payload;
 
 namespace UtpTypes.UtpMessageContext;
 
-public interface IUtpContext
+public interface IUtpContext : IDisposable
 {
     Guid ClientId { get; }
     short ActionCode { get; }
