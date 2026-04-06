@@ -1,10 +1,17 @@
 using UtpTypes.Middleware.Delegates;
+using UtpTypes.Services;
 using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Middleware.MiddlewareConcretes;
 
 public abstract class UtpMiddlewareBase : IUtpMiddleware
 {
+    protected readonly IServiceLocator ServiceLocator;
+    protected UtpMiddlewareBase(IServiceLocator serviceLocator)
+    {
+        ServiceLocator = serviceLocator;
+    }
+    
     public ValueTask InvokeAsync(UtpContext ctx, UtpDelegate next)
     {
         if (ctx.CancellationToken.IsCancellationRequested)

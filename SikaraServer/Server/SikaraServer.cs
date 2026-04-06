@@ -20,10 +20,17 @@ internal class SikaraServerClass : BackgroundService
         _listener = new TcpListener(IPAddress.Parse(_serverIp), _serverPort);
         _logger = logger;
     }
+
     public void Init()
     {
+        GlobalServerSetup();
         _listener.Start();
         _logger.LogInformation("Server is listening...");
+    }
+
+    private void GlobalServerSetup()
+    {
+        GlobalServerSetuper.Instance.Setup(logger: _logger);
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct) => await RunServerAsync(ct);

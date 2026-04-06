@@ -12,6 +12,7 @@ using UTP.Exceptions;
 using UtpTypes.Middleware.MiddlewareConcretes;
 using UtpTypes.Pipelines;
 using UtpTypes.Routers;
+using UtpTypes.Services;
 
 namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
 
@@ -29,9 +30,11 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
             logger.LogWarning($"Failed to instantiate UtpClient for Client with ID: {Id}");
             return;
         }
+        // Register services in the service locator for middleware and routers
+
         UtpRouter router = new UtpRouter();
         UtpPipeline pipeline = new UtpPipeline(router);
-        pipeline.Use(new LoggingMiddleware(logger));
+        pipeline.Use(new LoggingMiddleware(GlobalServiceLocator.Instance));
 
         try
         {

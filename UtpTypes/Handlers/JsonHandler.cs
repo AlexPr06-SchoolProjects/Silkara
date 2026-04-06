@@ -1,16 +1,20 @@
+
 using UtpTypes.UtpMessageContext;
+using UtpTypes.Services;
 using ActionCodes = UtpTypes.Actions.ActionCode;
+using Microsoft.Extensions.Logging;
 
 namespace UtpTypes.Handlers;
 
 // ReSharper disable once UnusedMember.Global
-public class JsonHandler : IUtpHandler
+public class JsonHandler(IServiceLocator globalServiceLocator) : UtpHandlerBase(globalServiceLocator)
 {
-    public short ActionCode => (short)ActionCodes.Json;
+    public override short ActionCode => (short)ActionCodes.Json;
 
-    public Task HandleAsync(UtpContext ctx)
+    public override Task HandleAsync(UtpContext ctx)
     {
-        Console.WriteLine("JsonHandler is processing the message. IT'S A JSON!");
+        var logger = GlobalServiceLocator.Instance.GetRequiredService<ILogger>();
+        logger.LogInformation("JsonHandler: IT'S A JSON!");
         return Task.CompletedTask;
     }
 }

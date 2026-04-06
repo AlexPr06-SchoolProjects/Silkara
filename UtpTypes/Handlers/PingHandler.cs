@@ -1,14 +1,15 @@
 ﻿using UtpTypes.UtpMessageContext;
+using UtpTypes.Services;
 using ActionCodes = UtpTypes.Actions.ActionCode;
 
 namespace UtpTypes.Handlers;
 
 // ReSharper disable once UnusedMember.Global
-public class PingHandler : IUtpHandler
+public class PingHandler(IServiceLocator serviceLocator) : UtpHandlerBase(serviceLocator)
 {
-    public short ActionCode => (short)ActionCodes.Ping;
+    public override short ActionCode => (short)ActionCodes.Ping;
 
-    public Task HandleAsync(UtpContext ctx)
+    public override Task HandleAsync(UtpContext ctx)
     {
         throw new NotImplementedException();
     }

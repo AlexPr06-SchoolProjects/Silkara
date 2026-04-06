@@ -1,22 +1,21 @@
 using System.Reflection;
 using UtpTypes.Handlers;
-using IServiceProvider = System.IServiceProvider;
+using UtpTypes.Services;
 
 namespace UtpTypes.Dispatchers;
 
-public class HandlersDispatcher(IServiceProvider serviceProvider)
+public class HandlersDispatcher
 {
-    private static readonly Dictionary<short, IUtpHandler> Handlers;
-
-    static HandlersDispatcher()
-    {
-        Handlers = Assembly.GetExecutingAssembly().GetTypes()
-            .Where(t => typeof(IUtpHandler).IsAssignableFrom(t) 
+    private static readonly Lazy<Dictionary<short, UtpHandlerBase>> Handlers =
+        new(() => Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => typeof(UtpHandlerBase).IsAssignableFrom(t) 
                         && t is {IsInterface: false, IsAbstract: false})
-            .Select(t => (IUtpHandler)Activator.CreateInstance(t, true)!)
-            .ToDictionary(h => h.ActionCode, h => h);
-    }
+            .Select(t => (UtpHandlerBase)Activator.CreateInstance(t, GlobalServiceLocator.Instance)!)
+            .ToDictionary(h => h.ActionCode, h => h));
+    public static HandlersDispatcher Instance { get; } = new HandlersDispatcher();
 
-    public static bool TryGetHandler(short actionCode, out IUtpHandler? handler)
-        => Handlers.TryGetValue(actionCode, out handler);
+    private HandlersDispatcher() { }
+
+    public  UtpHandlerBase? TryGetHandler(short actionCode)
+        => Handlers.Value.GetValueOrDefault(actionCode);
 }
