@@ -7,7 +7,6 @@ public class UtpContext : IUtpContext
 {
     public IServiceLocator? ServiceLocator { get; set; }
     public CancellationToken CancellationToken { get; init; }
-    public Guid ClientId { get; }
     public short ActionCode { get; }
     public Dictionary<string, string> Headers { get; }
     public IPayload Payload { get; }
@@ -19,29 +18,38 @@ public class UtpContext : IUtpContext
     {
         ServiceLocator = null;
         CancellationToken = CancellationToken.None;
-        ClientId = Guid.Empty;
         ActionCode = actionCode;
         Headers = headers;
         Payload = payload;
     }
 
     public UtpContext(
-        Guid clientId,
+        CancellationToken ct,
         short actionCode,
         Dictionary<string, string> headers,
         IPayload payload) : this(actionCode, headers, payload)
     {
-        ClientId = clientId;
+        CancellationToken = ct;
+    }
+
+    public UtpContext(
+        IServiceLocator serviceLocator,
+        short actionCode,
+        Dictionary<string, string> headers,
+        IPayload payload) : this(actionCode, headers, payload)
+    {
+        ServiceLocator = serviceLocator;
     }
 
     public UtpContext(
         CancellationToken ct,
-        Guid clientId,
+        IServiceLocator serviceLocator,
         short actionCode,
         Dictionary<string, string> headers,
-        IPayload payload) : this(clientId, actionCode, headers, payload)
+        IPayload payload) : this(actionCode, headers, payload)
     {
         CancellationToken = ct;
+        ServiceLocator = serviceLocator;
     }
 
     public void Dispose()

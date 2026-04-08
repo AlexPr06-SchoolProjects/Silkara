@@ -1,5 +1,5 @@
 ﻿using UtpTypes.Middleware.Delegates;
-using UtpTypes.Middleware.MiddlewareConcretes;
+using UtpTypes.Middleware;
 using UtpTypes.Routers;
 
 namespace UtpTypes.Pipelines;
@@ -17,8 +17,9 @@ public class UtpPipeline(UtpRouter router)
     {
         UtpDelegate pipeline = router.RouteAsync;
 
-        foreach (var middleware in _middlewares)
+        for (var i = _middlewares.Count - 1; i >= 0; i--)
         {
+            var middleware = _middlewares[i];
             var next = pipeline;
             pipeline = ctx => middleware.InvokeAsync(ctx, next);
         }

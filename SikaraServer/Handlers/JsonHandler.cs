@@ -1,34 +1,31 @@
-
-using UtpTypes.UtpMessageContext;
-using UtpTypes.Services;
-using ActionCodes = UtpTypes.Actions.ActionCode;
 using Microsoft.Extensions.Logging;
-using UtpTypes.UtpClientType;
-using UtpTypes.PayloadTypes;
 using UTP.UtpMessage;
+using UtpTypes.Actions;
+using UtpTypes.Handlers;
+using UtpTypes.PayloadTypes;
+using UtpTypes.Services;
+using UtpTypes.UtpMessageContext;
+using SilkaraServer.Client;
 
-namespace UtpTypes.Handlers;
+namespace SilkaraServer.Handlers;
 
 // ReSharper disable once UnusedMember.Global
 public class JsonHandler : UtpHandlerBase
 {
-    public override short ActionCode => (short)ActionCodes.Json;
+    public override short ActionCode => (short)MessageCode.Json;
     public override async Task HandleAsync(UtpContext ctx)
     {
         var logger = GlobalServiceLocator.Instance.GetRequiredService<ILogger>();
 
         // HANDLING LOGIC GOES HERE 
         logger.LogInformation("🎉 Сообщение получено!");
-        logger.LogInformation($"Результат: ActionCode: {ctx.ActionCode}");
-        logger.LogInformation($"Результат: ClientId: {ctx.ClientId}");
-        logger.LogInformation($"Результат: Headers: {ctx.Headers}");
-        logger.LogInformation($"Результат: Payload: {ctx.Payload}");
+        logger.LogInformation($"Результат: ActionCode: {ctx.ActionCode} Headers: {ctx.Headers} Payload: {ctx.Payload}");
         // HANDLING LOGIC GOES HERE
 
         // Example response logic
         if (ctx.ServiceLocator is not null)
         {
-            var utpClient = ctx.ServiceLocator.GetRequiredService<UtpClient>();
+            var utpClient = ctx.ServiceLocator.GetRequiredService<UtpServerClient>();
             ctx.Headers.Clear();
             ctx.Headers["Response"] = "Pong";
             await utpClient.SendMessageAsync(
@@ -39,7 +36,5 @@ public class JsonHandler : UtpHandlerBase
 
         // Dispose of the context to free resources
         DisposeContext(ctx);
-
-        return;
     }
 }

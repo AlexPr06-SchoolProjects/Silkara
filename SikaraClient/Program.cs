@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Hosting;
 using SilkaraClient.Client;
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 HostApplicationBuilder builder = new HostApplicationBuilder();
 
 builder.Services.AddHostedService<SilkaraClientClass>();

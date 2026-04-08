@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SilkaraServer.Server;
-using SilkaraServer.Client.Managers;
+using SilkaraServer.Client.Managers.Client;
+
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 HostApplicationBuilder builder = new HostApplicationBuilder(args);
 

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
-using SilkaraServer.Client.Managers;
+using SilkaraServer.Client.Managers.Client;
 using SilkaraServer.Client.Factories;
 using SilkaraServer.Client.Identities;
 
@@ -90,8 +90,8 @@ internal class SikaraServerClass : BackgroundService
         catch (Exception ex) { _logger.LogError($"ERROR: {ex.Message}"); }
         finally
         {
-            var id = client.Id;
-            await _clientManager.RemoveClient(client.Id);
+            var id = client.IdManager.ClientId;
+            await _clientManager.RemoveClient(id);
             _logger.LogInformation("Client {ClientId} removed", id);
         }
     }

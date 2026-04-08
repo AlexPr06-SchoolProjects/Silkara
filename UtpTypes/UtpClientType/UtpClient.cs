@@ -6,11 +6,6 @@ using UTP.UtpMessage;
 using UTP.UtpMessage.Interfaces;
 using UtpTypes.Dispatchers;
 using UtpTypes.PayloadTypes;
-using UtpTypes.Visitors;
-using UtpTypes.Pipelines;
-using UtpTypes.UtpMessageContext;
-using UtpTypes.Services;
-
 namespace UtpTypes.UtpClientType;
 
 
@@ -72,22 +67,6 @@ public class UtpClient : IAsyncDisposable
         }
 
         return (IUtpMessage)result;
-    }
-
-    public async Task HandleMessageAsync(
-        IUtpMessage rawMessage, 
-        UtpPipeline pipeline, 
-        Guid clientId, 
-        IServiceLocator? serviceLocator = null,
-        CancellationToken ct = default
-        )
-    {
-        var visitor = new ContextCreatorVisitor(clientId, ct);
-        UtpContext context = rawMessage.Accept(visitor);
-        if (serviceLocator != null)
-            context.ServiceLocator = serviceLocator;
-        await pipeline.Build().Invoke(context);
-        rawMessage.Dispose();
     }
 
     private Type? GetPayloadTypeFromHeaders(IDictionary<string, string> headers)

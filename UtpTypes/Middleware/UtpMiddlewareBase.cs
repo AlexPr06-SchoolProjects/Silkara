@@ -2,7 +2,7 @@ using UtpTypes.Middleware.Delegates;
 using UtpTypes.Services;
 using UtpTypes.UtpMessageContext;
 
-namespace UtpTypes.Middleware.MiddlewareConcretes;
+namespace UtpTypes.Middleware;
 
 public abstract class UtpMiddlewareBase : IUtpMiddleware
 {

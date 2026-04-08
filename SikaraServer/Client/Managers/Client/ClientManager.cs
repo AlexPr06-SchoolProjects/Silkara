@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using SilkaraServer.Client.Identities;
 
-namespace SilkaraServer.Client.Managers;
+namespace SilkaraServer.Client.Managers.Client;
 
 internal class ClientManager : IClientManager
 {
@@ -14,7 +14,7 @@ internal class ClientManager : IClientManager
         if (_disposed)
             throw new ObjectDisposedException(nameof(ClientManager));
 
-        if (_clientIdentities.TryAdd(clientIdentity.Id, clientIdentity))
+        if (_clientIdentities.TryAdd(clientIdentity.IdManager.ClientId, clientIdentity))
             Interlocked.Increment(ref _activeClientsCount);
     }
     

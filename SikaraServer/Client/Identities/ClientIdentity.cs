@@ -4,18 +4,23 @@ using SilkaraServer.Server;
 using UTP.Connection;
 using UTP.Exceptions;
 using UTP.UtpMessage.Interfaces;
-using UtpTypes.Middleware.MiddlewareConcretes;
+using SilkaraServer.Middleware;
 using UtpTypes.Pipelines;
 using UtpTypes.Routers;
 using UtpTypes.Services;
-using UtpTypes.UtpClientType;
+using SilkaraServer.Client.Managers.Id;
+using SilkaraServer.Services.StateServicesConcretes;
 
 namespace SilkaraServer.Client.Identities;
 
-internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
+internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager) : IClientIdentity
 {
-    public Guid Id { get; } = id;
-    private UtpClient? _utpClient;
+    private UtpPipeline? _pipeline;
+    private UtpRouter? _router;
+    private StateServiceLocator? _stateServiceLocator;
+    private ClientStateService? _clientStateService;
+    public IClientIdManager IdManager { get; } = clientIdManager;
+    private UtpServerClient? _utpClient;
     private bool _disposed;
 
     public async Task Processing(ILogger<SikaraServerClass> logger, CancellationToken ct)
@@ -23,17 +28,11 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         InstantiateConnection(logger, ct);
         if (_utpClient == null)
         {
-            logger.LogWarning($"Failed to instantiate UtpClient for Client with ID: {Id}");
+            logger.LogWarning($"Failed to instantiate UtpClient for Client with ID: {IdManager.ClientId}");
             return;
         }
-        // Register services in the service locator for middleware and routers
 
-        UtpRouter router = new UtpRouter();
-        UtpPipeline pipeline = new UtpPipeline(router);
-        pipeline.Use(new LoggingMiddleware(GlobalServiceLocator.Instance));
-
-        StateServiceLocator stateServiceLocator = new StateServiceLocator();
-        stateServiceLocator.Register(_utpClient);
+        ProcessSetup();
 
         try
         {
@@ -42,21 +41,21 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
                 try
                 {
                     IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
-                    await _utpClient.HandleMessageAsync(received, pipeline, clientId: Id, stateServiceLocator, ct);
+                    await _utpClient.HandleMessageAsync(received, _pipeline!, clientId: IdManager.ClientId, _stateServiceLocator, ct);
                 }
                 catch (ConnectionClosedPrematurelyException ex) 
                 {
-                    logger.LogInformation($"ConnectionClosedPrematurelyException: {ex.Message}. Client with ID: {Id}");
+                    logger.LogInformation($"ConnectionClosedPrematurelyException: {ex.Message}. Client with ID: {IdManager.ClientId}");
                     break;
                 }
                 catch (RemotePeerDisconnectedException ex)
                 {
-                    logger.LogInformation($"RemotePeerDisconnectedException: {ex.Message}. Client with ID: {Id}");
+                    logger.LogInformation($"RemotePeerDisconnectedException: {ex.Message}. Client with ID: {IdManager.ClientId}");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"Unexpected exception: {ex.Message}. Client with ID: {Id}");
+                    logger.LogError($"Unexpected exception: {ex.Message}. Client with ID: {IdManager.ClientId}");
                     break;
                 }
             }
@@ -64,10 +63,30 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         finally { CloseConnection(logger); }
     }
 
+    private void ProcessSetup()
+    {
+        // Instantiate services
+        _stateServiceLocator = new StateServiceLocator();
+        _clientStateService = new ClientStateService();
+
+        _router = new UtpRouter();
+        _pipeline = new UtpPipeline(_router);
+
+        // Register middleware
+        _pipeline.Use(new LoggingMiddleware(_stateServiceLocator));
+        _pipeline.Use(new StateValidationMiddleware(_stateServiceLocator));
+
+        // Register services in the service locator for middleware and routers
+        if (_utpClient is not null) 
+            _stateServiceLocator.Register(_utpClient);
+        _stateServiceLocator.Register(_clientStateService);
+        _stateServiceLocator.Register(IdManager);
+    }
+
     private void InstantiateConnection(ILogger<SikaraServerClass> logger, CancellationToken ct)
     {        
-        _utpClient = new UtpClient(new UtpConnection(tcpClient.Client, ct));
-        logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", Id);
+        _utpClient = new UtpServerClient(new UtpConnection(tcpClient.Client, ct));
+        logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", IdManager.ClientId);
     }
 
     private void CloseConnection(ILogger<SikaraServerClass> logger)
@@ -81,16 +100,16 @@ internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
         }
         catch (SocketException ex)
         {
-            logger.LogWarning($"SocketException while shutting down connection for Client {Id}: {ex.Message}");
+            logger.LogWarning($"SocketException while shutting down connection for Client {IdManager.ClientId}: {ex.Message}");
         }
         catch (ObjectDisposedException ex)
         {
-            logger.LogWarning($"ObjectDisposedException while shutting down connection for Client {Id}: {ex.Message}");
+            logger.LogWarning($"ObjectDisposedException while shutting down connection for Client {IdManager.ClientId}: {ex.Message}");
         }
         finally 
         {
             tcpClient.Close();
-            logger.LogInformation("Connection with client {ClientId} closed.", Id);
+            logger.LogInformation("Connection with client {ClientId} closed.", IdManager.ClientId);
         }
     }
 

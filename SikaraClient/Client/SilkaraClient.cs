@@ -6,60 +6,46 @@ using UTP.UtpMessage;
 using UtpTypes.Actions;
 using UtpTypes.PayloadTypes;
 using UtpTypes.UtpClientType;
+using UTP.UtpMessage.Interfaces;
+using UtpTypes.Pipelines;
+using UtpTypes.Routers;
+using UtpTypes.Services;
+
 
 namespace SilkaraClient.Client;
 
 internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : BackgroundService
 {
     private readonly TcpClient _tcpClient = new TcpClient();
-    private UtpClient? _utpClient;
+    private UtpClientAdapter? _utpClient;
+    private UtpPipeline? _pipeline;
+    private UtpRouter? _router;
+    private StateServiceLocator? _stateServiceLocator;
     private readonly string _serverIp = "127.0.0.1";
     private readonly int _serverPort = 123;
     protected override async Task ExecuteAsync(CancellationToken ct)
         => await RunClientAsync(ct);
+    
+    private void GlogalClientSetup() => GlobalClientSetuper.Instance.Setup(logger: logger);
 
     private async Task RunClientAsync(CancellationToken ct)
     {
-        string bigData = new string('A', 1024 * 1024 * 128);
-                var bigPayload = new JsonPayload(
-                    1,
-                    bigData
-                );
+        GlogalClientSetup();
 
-                var message = new UtpMessage<JsonPayload>(
-                    actionCode: (short)ActionCode.Json,
-                    headers: new Dictionary<string, string>
-                    {
-                        ["Test"] = "BigDataCheck",
-                        ["Mode"] = "Stress",
-                        ["Encoding"] = "utf-8",
-                        ["TraceId"] = Guid.NewGuid().ToString(),
-                        ["User-Agent"] = "UTP-StressClient/1.0",
-                        ["X-Random-1"] = new string('Z', 200),
-                        ["X-Random-2"] = new string('Y', 300),
-                    },
-                    payload: bigPayload
-                );
-
-        try
-        {
-            await ConnectToServerAsync(ct);
-        }
-        catch (OperationCanceledException)
-        {
-            logger.LogInformation("Connection attempt was canceled.");
-            return;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError($"ERROR: {ex.Message}");
-            return;
-        }
+        if(await ConnectedSuccessfully(ct) is false) return;
 
         if (_utpClient == null)                    {
             logger.LogWarning("UtpClient is not initialized.");
             return;
         }
+
+        ProcessSetup();
+
+        
+        // TEMPORARY
+        var message = CreateDefaultMessage();
+        // TEMPORARY
+
 
         try
         {
@@ -69,10 +55,10 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
                 {
                     await _utpClient.SendMessageAsync(message, ct);
                     logger.LogInformation("Message was sent");
-                    var response = await _utpClient.ReceiveMessageAsync(ct);
-                    logger.LogInformation("Response received.");
-                    logger.LogInformation($"Response ActionCode: {response.ActionCode} " +
-                                          $"Headers: {response.Headers} ");
+                    IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
+                    logger.LogInformation("Message was received");
+                    logger.LogInformation($"Received message: {received.ActionCode}, {received.Headers}");
+                    await _utpClient.HandleMessageAsync(received, _pipeline!, _stateServiceLocator, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -99,7 +85,7 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
         {
              await _tcpClient.ConnectAsync(_serverIp, _serverPort, ct);
             UtpConnection utpConnection = new UtpConnection(_tcpClient.Client, ct);
-            _utpClient = new UtpClient(utpConnection);
+            _utpClient = new UtpClientAdapter(new UtpClient(utpConnection));
             logger.LogInformation($"Connected to server at {_serverIp}:{_serverPort}");
         }
         catch (OperationCanceledException)
@@ -113,6 +99,67 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
                 Exception message: {ex.Message}");
             throw;
         }
+    }
+
+    private async Task<bool> ConnectedSuccessfully(CancellationToken ct)
+    {
+        try
+        {
+            await ConnectToServerAsync(ct);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Connection attempt was canceled.");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"ERROR: {ex.Message}");
+            return false;
+        }
+    }
+
+
+    private void ProcessSetup()
+    {
+        // Instantiate services
+        _stateServiceLocator = new StateServiceLocator();
+
+        _router = new UtpRouter();
+        _pipeline = new UtpPipeline(_router);
+
+        // Register middleware
+
+        // Register services in the service locator for middleware and routers
+        if (_utpClient is not null) 
+            _stateServiceLocator.Register(_utpClient);
+    }
+
+    private UtpMessage<JsonPayload> CreateDefaultMessage()
+    {     
+        string bigData = new string('A', 1024 * 1024 * 1);
+        var bigPayload = new JsonPayload(
+            1,
+            bigData
+        );
+
+        var message = new UtpMessage<JsonPayload>(
+            actionCode: (short)MessageCode.Json,
+            headers: new Dictionary<string, string>
+            {
+                ["Test"] = "BigDataCheck",
+                ["Mode"] = "Stress",
+                ["Encoding"] = "utf-8",
+                ["TraceId"] = Guid.NewGuid().ToString(),
+                ["User-Agent"] = "UTP-StressClient/1.0",
+                ["X-Random-1"] = new string('Z', 200),
+                ["X-Random-2"] = new string('Y', 300),
+            },
+            payload: bigPayload
+        );
+
+        return message;
     }
 
     private async Task DisconnectAsync()
@@ -135,12 +182,4 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
             logger.LogInformation("TCP connection closed.");
         }
     }
-
-    
-
-    //private async Task RequestChatCreation()
-    //{
-    //    var packet = new SikaraPacket<ChatCreationEnum>(ChatCreationEnum.CreateChat, "New-chat");
-    //    await JsonManager.SendMessageAsync<SikaraPacket<ChatCreationEnum>, ChatCreationEnum>(packet, writer);
-    //}
 }
