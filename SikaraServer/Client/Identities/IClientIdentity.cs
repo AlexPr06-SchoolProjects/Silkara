@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SilkaraServer.Server;
 
-namespace SilkaraServer.Client.Interfaces;
+namespace SilkaraServer.Client.Identities;
 
 internal interface IClientIdentity : IAsyncDisposable
 {

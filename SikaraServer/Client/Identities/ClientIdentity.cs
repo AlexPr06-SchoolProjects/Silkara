@@ -1,20 +1,16 @@
-﻿using JsonManagerLib.Classes;
-using JsonManagerLib.Enums;
-using JsonManagerLib.Records;
+﻿using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using SilkaraServer.Server;
-using SilkaraServer.Client.Interfaces;
-using System.Net.Sockets;
 using UTP.Connection;
-using UTP.UtpMessage.Interfaces;
-using UtpTypes.UtpClientType;
 using UTP.Exceptions;
+using UTP.UtpMessage.Interfaces;
 using UtpTypes.Middleware.MiddlewareConcretes;
 using UtpTypes.Pipelines;
 using UtpTypes.Routers;
 using UtpTypes.Services;
+using UtpTypes.UtpClientType;
 
-namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
+namespace SilkaraServer.Client.Identities;
 
 internal class ClientIdentity(TcpClient tcpClient, Guid id) : IClientIdentity
 {

@@ -1,7 +1,7 @@
-﻿using SilkaraServer.Client.Interfaces;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using SilkaraServer.Client.Identities;
 
-namespace SilkaraServer.Client.ClientManagers;
+namespace SilkaraServer.Client.Managers;
 
 internal class ClientManager : IClientManager
 {

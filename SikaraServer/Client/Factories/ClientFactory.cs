@@ -1,7 +1,7 @@
-﻿using SilkaraServer.Client.Interfaces;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using SilkaraServer.Client.Identities;
 
-namespace SilkaraServer.Client.ClientIdentities.BasicClientIdentity;
+namespace SilkaraServer.Client.Factories;
 
 internal class ClientFactory : IClientFactory
 {

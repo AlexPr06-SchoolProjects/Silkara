@@ -1,4 +1,6 @@
-﻿namespace SilkaraServer.Client.Interfaces;
+﻿using SilkaraServer.Client.Identities;
+
+namespace SilkaraServer.Client.Managers;
 
 internal interface IClientManager : IAsyncDisposable
 {
