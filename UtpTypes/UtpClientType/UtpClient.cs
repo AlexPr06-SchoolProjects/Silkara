@@ -34,15 +34,6 @@ public class UtpClient : IAsyncDisposable
         await (Task)method.Invoke(_engine, [utpMessage, ct])!;
     }
 
-    /* TODO: 
-
-    UtpClient.ReceiveMessageAsync() - does it job perfectly in terms of deserialization and converting to the actual Payload type. 
-
-    BUT it requires up to 5 - 8 times more memory than actual payload size!!! - that's terrible!
-    I assume that the problem stems from the approach I chose to convert IPayload to actual Payload type - reflection.
-    SHOULD BE REWRITEN WITH MORE EFFICIENT REFLECTION APPROACH. - but it is for future.
-
-     TODO: */
     public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default)
     {
         var (actionCode, headers, payloadLen) = await _engine.ReceiveBeforePayloadAsync(ct);

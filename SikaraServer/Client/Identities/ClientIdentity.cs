@@ -13,7 +13,8 @@ using SilkaraServer.Services.StateServicesConcretes;
 using StackExchange.Redis;
 namespace SilkaraServer.Client.Identities;
 
-internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager, IDatabase redisDb) : IClientIdentity
+internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager, IDatabase redisDb) 
+    : IClientIdentity
 {
     private UtpPipeline? _pipeline;
     private UtpRouter? _router;
