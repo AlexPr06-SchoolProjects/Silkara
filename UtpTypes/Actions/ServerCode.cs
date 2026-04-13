@@ -6,6 +6,8 @@ public enum ServerCode : short
     Error = 901,
     Unauthorized = 902,
     Forbidden = 903,
-    NotFound = 904
+    NotFound = 904,
+    RateLimitExceeded = 905,
+    ClientIdNotFound = 906
 }
 

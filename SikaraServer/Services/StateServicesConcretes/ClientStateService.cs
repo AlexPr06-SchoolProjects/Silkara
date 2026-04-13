@@ -3,7 +3,7 @@ using SilkaraServer.Client.States.StateConcretes;
 
 namespace SilkaraServer.Services.StateServicesConcretes;
 
-public class ClientStateService : IStateService
+internal class ClientStateService : IStateService
 {
     private IState _currentState = new UnauthorizedState();
     public IState CurrentState => _currentState;

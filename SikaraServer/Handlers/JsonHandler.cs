@@ -10,7 +10,7 @@ using SilkaraServer.Client;
 namespace SilkaraServer.Handlers;
 
 // ReSharper disable once UnusedMember.Global
-public class JsonHandler : UtpHandlerBase
+internal class JsonHandler : UtpHandlerBase
 {
     public override short ActionCode => (short)MessageCode.Json;
     public override async Task HandleAsync(UtpContext ctx)

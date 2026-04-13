@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Hosting;
 using SilkaraServer.Server;
 using SilkaraServer.Client.Managers.Client;
+using SilkaraServer.Settings;
+using StackExchange.Redis;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -16,6 +18,12 @@ builder.Services.Configure<HostOptions>(options =>
 {
     options.ShutdownTimeout = TimeSpan.FromSeconds(shutdownTimeoutSeconds);
 });
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    _ => ConnectionMultiplexer.Connect(RedisSettings.ConnectionString));
+builder.Services.AddSingleton(sp => 
+    sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
+
+builder.Services.AddSingleton<GlobalServerSetuper>();
 
 #endregion
 

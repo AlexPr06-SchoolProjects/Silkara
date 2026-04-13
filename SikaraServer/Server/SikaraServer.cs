@@ -5,18 +5,21 @@ using System.Net.Sockets;
 using SilkaraServer.Client.Managers.Client;
 using SilkaraServer.Client.Factories;
 using SilkaraServer.Client.Identities;
+using SilkaraServer.Settings;
 
 namespace SilkaraServer.Server;
 
 internal class SikaraServerClass : BackgroundService
 {
-    private readonly string _serverIp = "127.0.0.1";
-    private readonly int _serverPort = 123;
+    private readonly GlobalServerSetuper _setuper;
+    private readonly string _serverIp = GlobalServerSettings.IpAddress;
+    private readonly int _serverPort = GlobalServerSettings.Port;
     private readonly TcpListener _listener;
     private readonly ILogger<SikaraServerClass> _logger;
     private readonly List<Task> _clientTasks = new();
     private readonly IClientManager _clientManager;
-    public SikaraServerClass(ILogger<SikaraServerClass> logger, IClientManager clientManager) {
+    public SikaraServerClass(GlobalServerSetuper setuper, ILogger<SikaraServerClass> logger, IClientManager clientManager) {
+        _setuper = setuper;
         _clientManager = clientManager;
         _listener = new TcpListener(IPAddress.Parse(_serverIp), _serverPort);
         _logger = logger;
@@ -31,7 +34,7 @@ internal class SikaraServerClass : BackgroundService
 
     private void GlobalServerSetup()
     {
-        GlobalServerSetuper.Instance.Setup(logger: _logger);
+        _setuper.Setup(logger: _logger);
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct) => await RunServerAsync(ct);

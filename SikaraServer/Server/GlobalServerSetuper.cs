@@ -2,14 +2,14 @@ using Microsoft.Extensions.Logging;
 using SilkaraServer.Handlers;
 using UtpTypes.Dispatchers;
 using UtpTypes.Services;
+using SilkaraServer.Client.Factories;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace SilkaraServer.Server;
 
-internal class GlobalServerSetuper
+internal sealed class GlobalServerSetuper(IServiceProvider serviceProvider)
 {
-    public static GlobalServerSetuper Instance { get; } = new GlobalServerSetuper();
-
-    private GlobalServerSetuper() { }
     public void Setup(ILogger logger)
     {
         // Perform any global setup for the server here
@@ -21,5 +21,7 @@ internal class GlobalServerSetuper
 
         HandlersDispatcher.AddHandler(new LoginHandler());
         HandlersDispatcher.AddHandler(new JsonHandler());
+
+        ClientFactory.Setup(serviceProvider.GetRequiredService<IDatabase>());
     }
 }

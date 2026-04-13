@@ -14,8 +14,8 @@ namespace Benchmarking.Tests;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
-//[DisassemblyDiagnoser(printSource: true)]
-//[HardwareCounters(HardwareCounter.CacheMisses)]
+[DisassemblyDiagnoser(printSource: true)]
+[HardwareCounters(HardwareCounter.CacheMisses)]
 [ExceptionDiagnoser]
 [Config(typeof(Config))]
 public class UtpClientSendMessageAsyncBenchmark

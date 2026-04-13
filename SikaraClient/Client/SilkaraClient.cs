@@ -10,9 +10,11 @@ using UTP.UtpMessage.Interfaces;
 using UtpTypes.Pipelines;
 using UtpTypes.Routers;
 using UtpTypes.Services;
-
+using SilkaraClient.Settings;
 
 namespace SilkaraClient.Client;
+
+
 
 internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : BackgroundService
 {
@@ -21,8 +23,8 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
     private UtpPipeline? _pipeline;
     private UtpRouter? _router;
     private StateServiceLocator? _stateServiceLocator;
-    private readonly string _serverIp = "127.0.0.1";
-    private readonly int _serverPort = 123;
+    private readonly string _serverIp = GlobalClientSettings.IpAddress;
+    private readonly int _serverPort = GlobalClientSettings.Port;
     protected override async Task ExecuteAsync(CancellationToken ct)
         => await RunClientAsync(ct);
     

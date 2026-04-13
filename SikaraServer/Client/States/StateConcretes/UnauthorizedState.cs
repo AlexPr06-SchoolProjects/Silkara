@@ -3,7 +3,7 @@ using UtpTypes.UtpMessageContext;
 namespace SilkaraServer.Client.States.StateConcretes;
 
 //TODO: Define logic for this state
-public class UnauthorizedState : IState
+internal class UnauthorizedState : IState
 {
     public bool CanExecute(short actionCode)
     {

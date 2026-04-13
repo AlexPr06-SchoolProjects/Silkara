@@ -1,6 +1,6 @@
 namespace SilkaraServer.Chat;
 
-public interface IClientNotifier
+internal interface IClientNotifier
 {
     Task NotifyClientsAsync(string message);
 }

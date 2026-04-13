@@ -7,7 +7,7 @@ using UtpTypes.Services;
 using UTP.UtpMessage.Interfaces;
 
 namespace SilkaraServer.Client;
-public class UtpServerClient(UtpConnection connection) : UtpClient(connection)
+internal class UtpServerClient(UtpConnection connection) : UtpClient(connection)
 {
     public async Task HandleMessageAsync(
         IUtpMessage rawMessage,

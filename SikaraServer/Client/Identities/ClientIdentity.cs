@@ -10,10 +10,10 @@ using UtpTypes.Routers;
 using UtpTypes.Services;
 using SilkaraServer.Client.Managers.Id;
 using SilkaraServer.Services.StateServicesConcretes;
-
+using StackExchange.Redis;
 namespace SilkaraServer.Client.Identities;
 
-internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager) : IClientIdentity
+internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager, IDatabase redisDb) : IClientIdentity
 {
     private UtpPipeline? _pipeline;
     private UtpRouter? _router;
@@ -74,6 +74,7 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
 
         // Register middleware
         _pipeline.Use(new LoggingMiddleware(_stateServiceLocator));
+        _pipeline.Use(new RateLimitMiddleware(_stateServiceLocator));
         _pipeline.Use(new StateValidationMiddleware(_stateServiceLocator));
 
         // Register services in the service locator for middleware and routers
@@ -81,6 +82,7 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
             _stateServiceLocator.Register(_utpClient);
         _stateServiceLocator.Register(_clientStateService);
         _stateServiceLocator.Register(IdManager);
+        _stateServiceLocator.Register(redisDb);
     }
 
     private void InstantiateConnection(ILogger<SikaraServerClass> logger, CancellationToken ct)

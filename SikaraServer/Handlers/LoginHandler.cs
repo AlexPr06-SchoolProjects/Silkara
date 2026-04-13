@@ -6,7 +6,7 @@ using UtpTypes.UtpMessageContext;
 
 namespace SilkaraServer.Handlers;
 
-public class LoginHandler : UtpHandlerBase
+internal class LoginHandler : UtpHandlerBase
 {
     public override short ActionCode => (short)ClientCode.Login;
 
