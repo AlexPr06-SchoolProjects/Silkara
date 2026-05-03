@@ -19,9 +19,10 @@ internal sealed class GlobalServerSetuper(IServiceProvider serviceProvider)
         // Register handlers
         GlobalServiceLocator.Instance.Register(logger);
 
+        //TEST:
         HandlersDispatcher.AddHandler(new LoginHandler());
         HandlersDispatcher.AddHandler(new JsonHandler());
-
+        //TEST:
         ClientFactory.Setup(serviceProvider.GetRequiredService<IDatabase>());
     }
 }

@@ -14,7 +14,7 @@ namespace SilkaraServer.Middleware;
 
 internal class RateLimitMiddleware(IServiceLocator serviceLocator) : UtpMiddlewareBase(serviceLocator)
 {
-    private const int MaxRequestsPerMinute = GlobalServerSettings.MaxRequestsPerMinute;
+    private readonly int _maxRequestsPerMinute = GlobalServerSettings.MaxRequestsPerMinute;
     protected override async ValueTask OnInvokeAsync(UtpContext ctx, UtpDelegate next)
     {
         var idManager = ctx.ServiceLocator?.GetRequiredService<IClientIdManager>();
@@ -62,6 +62,6 @@ internal class RateLimitMiddleware(IServiceLocator serviceLocator) : UtpMiddlewa
             await redisDb.KeyExpireAsync(key, TimeSpan.FromSeconds(65));
         }
 
-        return count > MaxRequestsPerMinute;
+        return count > _maxRequestsPerMinute;
     }
 }

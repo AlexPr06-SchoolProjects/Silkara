@@ -29,7 +29,7 @@ internal class SikaraServerClass : BackgroundService
     {
         GlobalServerSetup();
         _listener.Start();
-        _logger.LogInformation("Server is listening...");
+        _logger.LogInformation("Server is listening on {Ip}:{Port}...", _serverIp, _serverPort);
     }
 
     private void GlobalServerSetup()

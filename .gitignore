@@ -35,6 +35,7 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+.vscode/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -361,3 +362,38 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ==============================================================================
+# ENVIRONMENT VARIABLES (SECRET FILES)
+# ==============================================================================
+
+# Main environment file containing sensitive credentials
+.env
+
+# Local overrides for different environments/workstations
+.env.local
+.env.dev
+.env.development
+.env.test
+.env.staging
+.env.production
+.env.prod
+.env.*
+
+# Specific secret files or localized machine overrides
+.env*.local
+
+# Docker-specific environment configurations
+.env.docker
+
+# Backup, temporary, or legacy environment files
+.env.bak
+.env.old
+.env.save
+.env.example.bak
+
+# --- EXCEPTIONS (Tracked in Git) ---
+# We track template/example files because they DO NOT contain real secrets.
+# They serve as a guide for other developers to know which variables to define.
+!.env.example
+!.env.template

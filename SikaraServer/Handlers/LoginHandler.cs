@@ -10,7 +10,7 @@ internal class LoginHandler : UtpHandlerBase
 {
     public override short ActionCode => (short)ClientCode.Login;
 
-    public override async Task HandleAsync(UtpContext ctx)
+    public override Task HandleAsync(UtpContext ctx)
     {
         // var payload = (LoginPayload)ctx.Payload;
 
