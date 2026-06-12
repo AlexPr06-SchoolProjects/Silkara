@@ -34,7 +34,7 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
     {
         GlogalClientSetup();
 
-        if(await ConnectedSuccessfully(ct) is false) return;
+        if(!await ConnectedSuccessfully(ct)) return;
 
         if (_utpClient == null)                    {
             logger.LogWarning("UtpClient is not initialized.");

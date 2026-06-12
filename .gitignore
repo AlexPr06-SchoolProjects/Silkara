@@ -397,3 +397,7 @@ FodyWeavers.xsd
 # They serve as a guide for other developers to know which variables to define.
 !.env.example
 !.env.template
+
+# --- IMPORTANT FOLDERS ---
+/certs/
+/secrets/

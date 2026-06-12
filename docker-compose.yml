@@ -9,7 +9,11 @@ services:
       dockerfile: SikaraServer/Dockerfile
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
+    secrets:
+      - db_user
+      - db_password
     depends_on:
+      - db
       - redis
 
     # Docker Compose just takes it and drops it inside the container so your C# code can read it.
@@ -31,6 +35,8 @@ services:
       redis-server 
       --requirepass ${REDIS_PASSWORD}
       --protected-mode yes
+      --maxmemory 400mb
+      --maxmemory-policy allkeys-lru
       --tcp-backlog 511
       --timeout 0
       --tcp-keepalive 300
@@ -40,3 +46,43 @@ services:
         limits:
           memory: 512M
     restart: always
+
+  db:
+    image: postgres:17
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Setting neutral locale
+      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8"
+    secrets:
+      - db_user
+      - db_password
+      - db_cert
+      - db_key
+    volumes:
+      - postgres_data:/var/lib/postgresql/
+    command: >
+      sh -c "cp /run/secrets/db_key /tmp/server.key && 
+             chmod 600 /tmp/server.key && 
+             chown postgres:postgres /tmp/server.key && 
+             exec docker-entrypoint.sh postgres 
+             -c ssl=on 
+             -c ssl_cert_file=/run/secrets/db_cert 
+             -c ssl_key_file=/tmp/server.key"
+
+volumes:
+  postgres_data:
+
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt
+  db_cert:
+    file: ./certs/server.crt
+  db_key:
+    file: ./certs/server.key
