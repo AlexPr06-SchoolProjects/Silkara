@@ -1,1 +1,7 @@
-.env
+# All .env
+*.env*
+
+# --- IMPORTANT FOLDERS ---
+/certs/*
+/secrets/*
+*.decrypted~*

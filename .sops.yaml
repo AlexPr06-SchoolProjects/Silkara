@@ -1,0 +1,11 @@
+creation_rules:
+  - path_regex: \.env.*
+    input_type: dotenv
+    output_type: dotenv
+    age: "age1h7ef3wg7w05u9fd4y2vhngfx9y4tfuw28pp4txedzz3pss0lfsnqqsqrg4"
+
+  - path_regex: secrets/.*
+    age: "age1h7ef3wg7w05u9fd4y2vhngfx9y4tfuw28pp4txedzz3pss0lfsnqqsqrg4"
+
+  - path_regex: certs/.*
+    age: "age1h7ef3wg7w05u9fd4y2vhngfx9y4tfuw28pp4txedzz3pss0lfsnqqsqrg4"

@@ -398,7 +398,15 @@ FodyWeavers.xsd
 !.env.example
 !.env.template
 
+# All .env
+*.env*
+
 # --- IMPORTANT FOLDERS ---
-/certs/
-/secrets/
+/certs/*
+/secrets/*
 *.decrypted~*
+
+# But WE ALLOW committing encrypted versions
+!*.env*.enc
+!/secrets/*.enc
+!/certs/*.enc
