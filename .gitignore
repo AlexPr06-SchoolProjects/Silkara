@@ -401,3 +401,4 @@ FodyWeavers.xsd
 # --- IMPORTANT FOLDERS ---
 /certs/
 /secrets/
+*.decrypted~*

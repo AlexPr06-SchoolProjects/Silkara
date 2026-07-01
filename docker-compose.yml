@@ -51,6 +51,8 @@ services:
     image: postgres:17
     restart: always
     shm_size: 128mb
+    # ports:
+    #   - "5432:5432"
     environment:
       POSTGRES_USER_FILE: /run/secrets/db_user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password

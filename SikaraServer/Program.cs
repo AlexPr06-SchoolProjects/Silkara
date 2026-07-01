@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using SilkaraServer.Server;
 using SilkaraServer.Client.Managers.Client;
 using SilkaraServer.Settings;
+using SilkaraServer.Database;
 using StackExchange.Redis;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
