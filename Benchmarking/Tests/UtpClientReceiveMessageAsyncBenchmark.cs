@@ -18,7 +18,7 @@ namespace Benchmarking.Tests;
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [DisassemblyDiagnoser(printSource: true, printInstructionAddresses: true)]
-[HardwareCounters(HardwareCounter.CacheMisses)]
+// [HardwareCounters(HardwareCounter.CacheMisses)] // error-prone on Linux
 [ExceptionDiagnoser]
 [Config(typeof(Config))]
 public class UtpClientReceiveMessageAsyncBenchmark

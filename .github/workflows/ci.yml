@@ -1,0 +1,41 @@
+name: .NET Core CI
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+    - main
+    - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Download the repository code to the GitHub virtual machine
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Install the .NET SDK v10
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    # 3. Restore dependencies (NuGet packages) with caching for speed
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # 4. Check code formatting (Linter)
+    # If the code isn't formatted using dotnet format, this step will fail and point out the errors.
+    - name: Check formatting
+      run: dotnet format --verify-no-changes --verbosity normal
+    
+    # 5. Compile the project in Release mode
+    - name: Build project
+      run: dotnet build --configuration Release --no-restore
+
+    # 6. Run Unit Tests
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
