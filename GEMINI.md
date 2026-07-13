@@ -8,8 +8,8 @@ The project is structured into several key components:
 
 - **`UTP/`**: The core protocol engine. It handles low-level socket communication, packet serialization/deserialization, and efficient data streaming using `System.IO.Pipelines`.
 - **`UtpTypes/`**: Contains protocol-specific types, message structures, dispatchers, and middleware interfaces.
-- **`SikaraServer/`**: The server application implemented as a `BackgroundService`. It listens for incoming TCP connections and manages client states.
-- **`SikaraClient/`**: The client application implementation, also as a `BackgroundService`, which connects to the server and handles protocol-level message exchange.
+- **`SilkaraServer/`**: The server application implemented as a `BackgroundService`. It listens for incoming TCP connections and manages client states.
+- **`SilkaraClient/`**: The client application implementation, also as a `BackgroundService`, which connects to the server and handles protocol-level message exchange.
 - **`JsonManagerLib/`**: A library dedicated to JSON serialization and management of packet payloads.
 
 ## Building and Running
@@ -28,11 +28,11 @@ The project is a standard .NET solution.
   ```
 - **Run Server:**
   ```bash
-  dotnet run --project SikaraServer/SilkaraServer.csproj
+  dotnet run --project SilkaraServer/SilkaraServer.csproj
   ```
 - **Run Client:**
   ```bash
-  dotnet run --project SikaraClient/SilkaraClient.csproj
+  dotnet run --project SilkaraClient/SilkaraClient.csproj
   ```
 
 ## Security and Configuration

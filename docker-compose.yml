@@ -6,7 +6,7 @@ services:
     container_name: silkaraserver
     build:
       context: .
-      dockerfile: SikaraServer/Dockerfile
+      dockerfile: src/SilkaraServer/Dockerfile
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     secrets:
