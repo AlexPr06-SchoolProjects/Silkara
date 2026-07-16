@@ -12,6 +12,9 @@ services:
     secrets:
       - db_user
       - db_password
+    networks:
+      - db_net
+      - redis_net
     depends_on:
       - db
       - redis
@@ -30,6 +33,8 @@ services:
   redis:
     image: redis:alpine
     container_name: silkara_redis
+    networks:
+      - redis_net
     # Using protected mode and ACL directly in the startup command
     command: >
       redis-server 
@@ -67,6 +72,8 @@ services:
       - db_key
     volumes:
       - postgres_data:/var/lib/postgresql/
+    networks:
+      - db_net
     command: >
       sh -c "cp /run/secrets/db_key /tmp/server.key && 
              chmod 600 /tmp/server.key && 
@@ -78,6 +85,10 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  db_net:     # Only Silkara Server and Postgres can talk here
+  redis_net:  # Only Silkara Server and Redis can talk here
 
 secrets:
   db_user:

@@ -410,3 +410,6 @@ FodyWeavers.xsd
 !*.env*.enc
 !/secrets/*.enc
 !/certs/*.enc
+
+# SonarQube local analysis folders
+.sonarqube/
