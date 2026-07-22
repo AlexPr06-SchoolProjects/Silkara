@@ -26,17 +26,17 @@ jobs:
 
     # 3. Restore dependencies (NuGet packages) with caching for speed
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Silkara.sln
 
     # 4. Check code formatting (Linter)
     # If the code isn't formatted using dotnet format, this step will fail and point out the errors.
     - name: Check formatting
-      run: dotnet format --verify-no-changes --verbosity normal
+      run: dotnet format Silkara.sln --verify-no-changes --verbosity normal
     
     # 5. Compile the project in Release mode
     - name: Build project
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build Silkara.sln --configuration Release --no-restore
 
     # 6. Run Unit Tests
     - name: Run tests
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test Silkara.sln --configuration Release --no-build --verbosity normal
