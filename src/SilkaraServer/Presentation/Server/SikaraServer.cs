@@ -85,7 +85,7 @@ internal class SilkaraServerClass : BackgroundService, SilkaraServerIdenity
             _logger.LogInformation("Loop stopped due token cancellation.");
         }
         finally{ _logger.LogInformation("ListenAsync loop iteration finished."); }
-    }
+    } 
 
     private async Task HandleClientAsync(IClientIdentity client, CancellationToken ct)
     {
