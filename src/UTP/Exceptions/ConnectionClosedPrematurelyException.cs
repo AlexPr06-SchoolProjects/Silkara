@@ -2,7 +2,7 @@ namespace UTP.Exceptions;
 
 public class ConnectionClosedPrematurelyException : Exception
 {
-    public ConnectionClosedPrematurelyException() 
+    public ConnectionClosedPrematurelyException()
         : base("The connection was closed prematurely while there were still bytes in the buffer.") { }
     public ConnectionClosedPrematurelyException(string message)
         : base(message) { }

@@ -22,8 +22,8 @@ public class UtpClient : IAsyncDisposable
     public async Task SendMessageAsync<TPayload>(UtpMessage<TPayload> utpMessage, CancellationToken ct = default)
         where TPayload : IPayload
             => await _engine.SendMessageAsync(utpMessage, ct);
-   
-    public async Task SendMessageAsync (IUtpMessage utpMessage, CancellationToken ct = default)
+
+    public async Task SendMessageAsync(IUtpMessage utpMessage, CancellationToken ct = default)
     {
         Type? payloadType = GetPayloadTypeFromHeaders(utpMessage.Headers);
 
@@ -43,7 +43,7 @@ public class UtpClient : IAsyncDisposable
 
         object result = message!;
 
-        if (payloadLen > 0) 
+        if (payloadLen > 0)
         {
             if (payloadType == null)
                 throw new Exception("Payload exists but type is missing");
@@ -84,7 +84,7 @@ internal static class UtpMessageCacheManager
 {
     // PayloadType -> Func which creates UtpMessage<PayloadType>
     private static readonly Dictionary<
-           Type, 
+           Type,
            Func<UtpEngine, int, object, CancellationToken, Task<object>>> Cache = new();
 
     public static async Task<object> Execute(

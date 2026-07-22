@@ -21,6 +21,6 @@ internal class ClientFactory : IClientFactory
     }
     public IClientIdentity Create(TcpClient tcpClient)
         => new ClientIdentity(tcpClient, new ClientIdManager(Guid.NewGuid()), _redisDb);
-    
+
 }
 

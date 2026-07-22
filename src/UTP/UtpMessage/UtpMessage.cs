@@ -30,7 +30,7 @@ public class UtpMessage<TPayload> : IUtpMessage<TPayload>
     }
 
     public UtpMessage(
-        short actionCode, 
+        short actionCode,
         Dictionary<string, string>? headers,
         TPayload? payload) : this(actionCode, headers)
     {

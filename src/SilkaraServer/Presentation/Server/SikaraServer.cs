@@ -18,7 +18,8 @@ internal class SilkaraServerClass : BackgroundService, SilkaraServerIdenity
     private readonly ILogger<SilkaraServerClass> _logger;
     private readonly List<Task> _clientTasks = new();
     private readonly IClientManager _clientManager;
-    public SilkaraServerClass(GlobalServerSetuper setuper, ILogger<SilkaraServerClass> logger, IClientManager clientManager) {
+    public SilkaraServerClass(GlobalServerSetuper setuper, ILogger<SilkaraServerClass> logger, IClientManager clientManager)
+    {
         _setuper = setuper;
         _clientManager = clientManager;
         _listener = new TcpListener(IPAddress.Parse(_serverIp), _serverPort);
@@ -84,8 +85,8 @@ internal class SilkaraServerClass : BackgroundService, SilkaraServerIdenity
         {
             _logger.LogInformation("Loop stopped due token cancellation.");
         }
-        finally{ _logger.LogInformation("ListenAsync loop iteration finished."); }
-    } 
+        finally { _logger.LogInformation("ListenAsync loop iteration finished."); }
+    }
 
     private async Task HandleClientAsync(IClientIdentity client, CancellationToken ct)
     {
@@ -108,7 +109,7 @@ internal class SilkaraServerClass : BackgroundService, SilkaraServerIdenity
 
     private Task[] GetTasksToWait()
     {
-        lock(_clientTasks) { return _clientTasks.ToArray(); }
+        lock (_clientTasks) { return _clientTasks.ToArray(); }
     }
 
     public override async Task StopAsync(CancellationToken ct)

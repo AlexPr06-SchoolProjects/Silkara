@@ -2,10 +2,10 @@ namespace UtpTypes.Services;
 
 public class ServiceLocatorBase : IServiceLocator
 {
-   private readonly Dictionary<Type, object> _services = new();
+    private readonly Dictionary<Type, object> _services = new();
 
-   public void Register<TService>(TService serviceInstance)
-        where TService : class
+    public void Register<TService>(TService serviceInstance)
+         where TService : class
     {
         if (!_services.TryAdd(typeof(TService), serviceInstance))
         {

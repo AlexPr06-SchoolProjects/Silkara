@@ -43,8 +43,8 @@ public class UtpEngine : IAsyncDisposable
         }
     }
     public async Task<UtpMessage<TPayload>> ReceivePayloadAsync<TPayload>(
-        int payloadLen, 
-        UtpMessage<TPayload> message, 
+        int payloadLen,
+        UtpMessage<TPayload> message,
         CancellationToken ct = default
         )
         where TPayload : IPayload
@@ -106,7 +106,7 @@ public class UtpEngine : IAsyncDisposable
 
         if (utpMessage.PayloadStream != null && utpMessage.PayloadStream != Stream.Null)
         {
-            if (utpMessage.PayloadStream.CanSeek) 
+            if (utpMessage.PayloadStream.CanSeek)
                 utpMessage.PayloadStream.Position = 0;
             await utpMessage.PayloadStream.CopyToAsync(_writer, ct);
         }
@@ -171,7 +171,7 @@ public class UtpEngine : IAsyncDisposable
         {
             message.SetPayload(default);
             return true;
-        }  
+        }
 
         if (payloadLen < 0)
             throw new InvalidDataException();
@@ -197,8 +197,9 @@ public class UtpEngine : IAsyncDisposable
         {
             throw new InvalidDataException($"Invalid payload JSON : {ex.Message}");
         }
-        catch (Exception ex) {
-            throw new InvalidDataException($"ERROR: {ex.Message}"); 
+        catch (Exception ex)
+        {
+            throw new InvalidDataException($"ERROR: {ex.Message}");
         }
     }
 
@@ -215,4 +216,4 @@ public class UtpEngine : IAsyncDisposable
     {
         await _connection.DisposeAsync();
     }
-} 
+}

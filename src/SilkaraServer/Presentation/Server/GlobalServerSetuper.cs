@@ -15,7 +15,7 @@ internal sealed class GlobalServerSetuper(IServiceProvider serviceProvider)
         // Perform any global setup for the server here
         // For example, you can register global services, configure logging, etc.
 
-        
+
         // Register handlers
         GlobalServiceLocator.Instance.Register(logger);
 

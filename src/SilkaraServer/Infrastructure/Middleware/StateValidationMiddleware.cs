@@ -10,20 +10,20 @@ using SilkaraServer.Infrastructure.Middleware.Extensions;
 
 namespace SilkaraServer.Infrastructure.Middleware;
 
-internal class StateValidationMiddleware(IServiceLocator serviceLocator) 
+internal class StateValidationMiddleware(IServiceLocator serviceLocator)
     : UtpMiddlewareBase(serviceLocator)
 {
     protected override async ValueTask OnInvokeAsync(UtpContext ctx, UtpDelegate next)
     {
-       var stateManager = ctx.ServiceLocator?.GetRequiredService<ClientStateService>();
-       var idManager = ctx.ServiceLocator?.GetRequiredService<IClientIdManager>();
-       var utpClient = ctx.ServiceLocator?.GetRequiredService<UtpServerClient>();
-       var logger = GlobalServiceLocator.Instance.GetRequiredService<ILogger>();
+        var stateManager = ctx.ServiceLocator?.GetRequiredService<ClientStateService>();
+        var idManager = ctx.ServiceLocator?.GetRequiredService<IClientIdManager>();
+        var utpClient = ctx.ServiceLocator?.GetRequiredService<UtpServerClient>();
+        var logger = GlobalServiceLocator.Instance.GetRequiredService<ILogger>();
 
         if (stateManager is null)
         {
             await utpClient.NotifyUser(
-                (short)ServerCode.Unauthorized, 
+                (short)ServerCode.Unauthorized,
                 "You are not authorized to perform this action.");
             logger.LogInformation("State manager is null.");
             return;
@@ -32,7 +32,7 @@ internal class StateValidationMiddleware(IServiceLocator serviceLocator)
         if (!stateManager.CurrentState.CanExecute(ctx.ActionCode))
         {
             await utpClient.NotifyUser(
-                (short)ServerCode.Unauthorized, 
+                (short)ServerCode.Unauthorized,
                 "You are not authorized to perform this action.");
             logger.LogInformation($"Client {idManager?.ClientId} tried action {ctx.ActionCode} " +
                                   $"while in {stateManager.CurrentState.GetType().Name}");
@@ -41,7 +41,7 @@ internal class StateValidationMiddleware(IServiceLocator serviceLocator)
 
         logger.LogInformation($"Client {idManager?.ClientId} tried action {ctx.ActionCode} " +
                               $"while in {stateManager.CurrentState.GetType().Name}");
-    
+
         await next(ctx);
     }
 }

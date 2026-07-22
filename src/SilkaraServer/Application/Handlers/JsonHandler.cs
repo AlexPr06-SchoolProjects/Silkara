@@ -29,7 +29,7 @@ internal class JsonHandler : UtpHandlerBase
             ctx.Headers.Clear();
             ctx.Headers["Response"] = "Pong";
             await utpClient.SendMessageAsync(
-                new UtpMessage<JsonPayload>(ctx.ActionCode, ctx.Headers, new JsonPayload(12, "Answer from server")), 
+                new UtpMessage<JsonPayload>(ctx.ActionCode, ctx.Headers, new JsonPayload(12, "Answer from server")),
                 ct: ctx.CancellationToken);
         }
         logger.LogInformation("Response sent.");

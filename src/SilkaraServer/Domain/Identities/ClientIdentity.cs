@@ -15,7 +15,7 @@ using SilkaraServer.Domain.Services.StateServicesConcretes;
 
 namespace SilkaraServer.Domain.Identities;
 
-internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager, IDatabase redisDb) 
+internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManager, IDatabase redisDb)
     : IClientIdentity
 {
     private UtpPipeline? _pipeline;
@@ -46,7 +46,7 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
                     IUtpMessage received = await _utpClient.ReceiveMessageAsync(ct);
                     await _utpClient.HandleMessageAsync(received, _pipeline!, clientId: IdManager.ClientId, _stateServiceLocator, ct);
                 }
-                catch (ConnectionClosedPrematurelyException ex) 
+                catch (ConnectionClosedPrematurelyException ex)
                 {
                     logger.LogInformation($"ConnectionClosedPrematurelyException: {ex.Message}. Client with ID: {IdManager.ClientId}");
                     break;
@@ -81,7 +81,7 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
         _pipeline.Use(new StateValidationMiddleware(_stateServiceLocator));
 
         // Register services in the service locator for middleware and routers
-        if (_utpClient is not null) 
+        if (_utpClient is not null)
             _stateServiceLocator.Register(_utpClient);
         _stateServiceLocator.Register(_clientStateService);
         _stateServiceLocator.Register(IdManager);
@@ -89,14 +89,14 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
     }
 
     private void InstantiateConnection(ILogger<SilkaraServerClass> logger, CancellationToken ct)
-    {        
+    {
         _utpClient = new UtpServerClient(new UtpConnection(tcpClient.Client, ct));
         logger.LogInformation("Connection with the Client ({ClientId} was instatntiated.", IdManager.ClientId);
     }
 
     private void CloseConnection(ILogger<SilkaraServerClass> logger)
     {
-        try 
+        try
         {
             if (tcpClient.Client.Connected)
             {
@@ -111,7 +111,7 @@ internal class ClientIdentity(TcpClient tcpClient, ClientIdManager clientIdManag
         {
             logger.LogWarning($"ObjectDisposedException while shutting down connection for Client {IdManager.ClientId}: {ex.Message}");
         }
-        finally 
+        finally
         {
             tcpClient.Close();
             logger.LogInformation("Connection with client {ClientId} closed.", IdManager.ClientId);

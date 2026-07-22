@@ -7,8 +7,8 @@ public class HandlersDispatcher
 {
     private static readonly Lazy<Dictionary<short, UtpHandlerBase>> Handlers =
         new(() => Assembly.GetExecutingAssembly().GetTypes()
-            .Where(t => typeof(UtpHandlerBase).IsAssignableFrom(t) 
-                        && t is {IsInterface: false, IsAbstract: false})
+            .Where(t => typeof(UtpHandlerBase).IsAssignableFrom(t)
+                        && t is { IsInterface: false, IsAbstract: false })
             .Select(t => (UtpHandlerBase)Activator.CreateInstance(t, [])!)
             .ToDictionary(h => h.ActionCode, h => h));
     public static HandlersDispatcher Instance { get; } = new HandlersDispatcher();
@@ -25,6 +25,6 @@ public class HandlersDispatcher
 
     private HandlersDispatcher() { }
 
-    public  UtpHandlerBase? TryGetHandler(short actionCode)
+    public UtpHandlerBase? TryGetHandler(short actionCode)
         => Handlers.Value.GetValueOrDefault(actionCode);
 }

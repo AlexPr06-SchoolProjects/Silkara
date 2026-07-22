@@ -43,7 +43,7 @@ public class UtpConnection : IAsyncDisposable
                 if (result.IsCompleted) break;
             }
         }
-        catch (OperationCanceledException ) { }
+        catch (OperationCanceledException) { }
         finally { await writer.CompleteAsync(); }
     }
 
@@ -71,7 +71,7 @@ public class UtpConnection : IAsyncDisposable
                         if (lastSent <= 0) break;
                         sent += lastSent;
                     }
-                }   
+                }
 
                 reader.AdvanceTo(buffer.End);
                 if (result.IsCompleted || result.IsCanceled) break;
@@ -87,7 +87,7 @@ public class UtpConnection : IAsyncDisposable
         try
         {
             if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
-        } 
+        }
         catch { /* Socket is already closed */ }
         _socket.Dispose();
         await _receivePipe.Writer.CompleteAsync();

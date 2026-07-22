@@ -20,7 +20,7 @@ internal class RateLimitMiddleware(IServiceLocator serviceLocator) : UtpMiddlewa
         var utpClient = ctx.ServiceLocator?.GetRequiredService<UtpServerClient>();
         var logger = GlobalServiceLocator.Instance.GetRequiredService<ILogger>();
         var redisDb = ctx.ServiceLocator?.GetRequiredService<IDatabase>();
-        
+
         if (idManager?.ClientId is not null)
         {
             if (redisDb is null)
@@ -34,13 +34,15 @@ internal class RateLimitMiddleware(IServiceLocator serviceLocator) : UtpMiddlewa
             }
             if (await IsThrottled(idManager.ClientId, redisDb))
             {
-                await utpClient.NotifyUser( 
+                await utpClient.NotifyUser(
                     (short)ServerCode.RateLimitExceeded,
                     "You have exceeded the maximum number of requests per minute.");
-                return; 
+                return;
             }
-        } else {
-            await utpClient.NotifyUser( 
+        }
+        else
+        {
+            await utpClient.NotifyUser(
                 (short)ServerCode.ClientIdNotFound,
                 "You don't have a client id. That could be a server issue. " +
                 "Please try to reconnect.");
@@ -53,7 +55,7 @@ internal class RateLimitMiddleware(IServiceLocator serviceLocator) : UtpMiddlewa
     private async Task<bool> IsThrottled(Guid clientId, IDatabase redisDb)
     {
         string key = $"ratelimit:{clientId}:{DateTime.UtcNow:yyyyMMddHHmm}";
-        
+
         long count = await redisDb.StringIncrementAsync(key);
 
         if (count == 1)

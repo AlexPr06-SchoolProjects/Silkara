@@ -11,8 +11,8 @@ public class ContextCreatorVisitor(CancellationToken ct = default) : IUtpMessage
     {
         return new UtpContext(
             ct,
-            message.ActionCode, 
-            (Dictionary<string, string>)message.Headers, 
+            message.ActionCode,
+            (Dictionary<string, string>)message.Headers,
             message.Payload!);
     }
 }

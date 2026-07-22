@@ -32,7 +32,7 @@ public class UtpClientReceiveMessageAsyncBenchmark
         }
     }
 
-    [Params(50)] 
+    [Params(50)]
     public int MegabytesAmount;
     private UtpClient? _serverUtp;
     private UtpClient? _clientUtp;
@@ -70,15 +70,15 @@ public class UtpClientReceiveMessageAsyncBenchmark
         _clientUtp = new UtpClient(new UtpConnection(_clientSideClient.Client));
 
 
-        _cts  = new CancellationTokenSource();
+        _cts = new CancellationTokenSource();
         _ = Task.Run(async () =>
         {
-            while (!_cts.Token.IsCancellationRequested && _clientSideClient.Connected) 
+            while (!_cts.Token.IsCancellationRequested && _clientSideClient.Connected)
             {
                 await _clientSideClient.GetStream().WriteAsync(_preSerializedMessage);
                 // On my PC I found dependence of time required to process receiving message on the amount of megabytes message encompasses.
                 // It is 1 : 3 , but I preferred 2 in sake of tests' accuracy
-                await Task.Delay(MegabytesAmount * 2); 
+                await Task.Delay(MegabytesAmount * 2);
             }
         }, _cts.Token);
     }

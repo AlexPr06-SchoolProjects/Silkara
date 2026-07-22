@@ -10,8 +10,8 @@ internal static class MiddlewareExtensions
     {
         if (client is not null)
             await client.SendMessageAsync(new UtpMessage<ServerResponsePaylaod>(
-                code, 
-                new Dictionary<string, string>(), 
+                code,
+                new Dictionary<string, string>(),
                 new ServerResponsePaylaod(message)));
     }
 }

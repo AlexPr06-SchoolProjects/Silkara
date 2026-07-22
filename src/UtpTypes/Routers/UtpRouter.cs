@@ -3,7 +3,7 @@ using UtpTypes.UtpMessageContext;
 
 namespace UtpTypes.Routers;
 
-public class UtpRouter 
+public class UtpRouter
 {
     public async ValueTask RouteAsync(UtpContext ctx)
     {

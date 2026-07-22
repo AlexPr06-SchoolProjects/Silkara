@@ -17,15 +17,15 @@ internal class ClientManager : IClientManager
         if (_clientIdentities.TryAdd(clientIdentity.IdManager.ClientId, clientIdentity))
             Interlocked.Increment(ref _activeClientsCount);
     }
-    
+
     public async Task RemoveClient(Guid clientId)
     {
-        if(_clientIdentities.TryRemove(clientId, out IClientIdentity? client))
+        if (_clientIdentities.TryRemove(clientId, out IClientIdentity? client))
             Interlocked.Decrement(ref _activeClientsCount);
         if (client is not null)
             await client.DisposeAsync();
     }
-    
+
     public IClientIdentity? GetClient(Guid clientId)
     {
         _clientIdentities.TryGetValue(clientId, out IClientIdentity? clientIdentity);

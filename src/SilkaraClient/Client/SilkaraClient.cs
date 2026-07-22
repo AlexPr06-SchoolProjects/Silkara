@@ -27,23 +27,24 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
     private readonly int _serverPort = GlobalClientSettings.Port;
     protected override async Task ExecuteAsync(CancellationToken ct)
         => await RunClientAsync(ct);
-    
+
     private void GlogalClientSetup() => GlobalClientSetuper.Instance.Setup(logger: logger);
 
     private async Task RunClientAsync(CancellationToken ct)
     {
         GlogalClientSetup();
 
-        if(!await ConnectedSuccessfully(ct)) return;
+        if (!await ConnectedSuccessfully(ct)) return;
 
-        if (_utpClient == null)                    {
+        if (_utpClient == null)
+        {
             logger.LogWarning("UtpClient is not initialized.");
             return;
         }
 
         ProcessSetup();
 
-        
+
         // TEMPORARY
         var message = CreateDefaultMessage();
         // TEMPORARY
@@ -85,7 +86,7 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
     {
         try
         {
-             await _tcpClient.ConnectAsync(_serverIp, _serverPort, ct);
+            await _tcpClient.ConnectAsync(_serverIp, _serverPort, ct);
             UtpConnection utpConnection = new UtpConnection(_tcpClient.Client, ct);
             _utpClient = new UtpClientAdapter(new UtpClient(utpConnection));
             logger.LogInformation($"Connected to server at {_serverIp}:{_serverPort}");
@@ -134,12 +135,12 @@ internal class SilkaraClientClass(ILogger<SilkaraClientClass> logger) : Backgrou
         // Register middleware
 
         // Register services in the service locator for middleware and routers
-        if (_utpClient is not null) 
+        if (_utpClient is not null)
             _stateServiceLocator.Register(_utpClient);
     }
 
     private UtpMessage<JsonPayload> CreateDefaultMessage()
-    {     
+    {
         string bigData = new string('A', 1024 * 1024 * 1);
         var bigPayload = new JsonPayload(
             1,

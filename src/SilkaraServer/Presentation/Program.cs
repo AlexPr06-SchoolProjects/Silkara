@@ -21,7 +21,7 @@ builder.Services.Configure<HostOptions>(options =>
 });
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     _ => ConnectionMultiplexer.Connect(RedisSettings.ConnectionString));
-builder.Services.AddSingleton(sp => 
+builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
 
 builder.Services.AddSingleton<GlobalServerSetuper>();

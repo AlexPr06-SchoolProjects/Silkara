@@ -16,10 +16,10 @@ internal static class BinaryHelper
     public static short GetShortFromSpan(ReadOnlySpan<byte> span)
         => BinaryPrimitives.ReadInt16BigEndian(span);
 
-    public static int ConvertToInt(Span<byte> bytes) 
+    public static int ConvertToInt(Span<byte> bytes)
         => BinaryPrimitives.ReadInt32BigEndian(bytes);
 
-    public static short ConvertToShort(Span<byte> bytes) 
+    public static short ConvertToShort(Span<byte> bytes)
         => BinaryPrimitives.ReadInt16BigEndian(bytes);
 
     public static void ReadFromStream(Stream stream, Span<byte> buffer)

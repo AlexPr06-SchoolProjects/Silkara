@@ -35,7 +35,7 @@ public class UtpClientSendMessageAsyncBenchmark
     private TcpListener? _server;
     private TcpClient? _client;
     private readonly string _serverIp = "127.0.0.1";
-    
+
     [Params(10, 50)]
     public int MegabytesAmount;
     private const int MessageCount = 5;
@@ -75,7 +75,8 @@ public class UtpClientSendMessageAsyncBenchmark
         _client = new TcpClient();
         _client.Connect(IPAddress.Parse(_serverIp), port);
 
-        _ = _server.AcceptSocketAsync().ContinueWith(t => {
+        _ = _server.AcceptSocketAsync().ContinueWith(t =>
+        {
             var s = t.Result;
             byte[] buffer = new byte[65536];
             while (s.Connected) s.Receive(buffer);

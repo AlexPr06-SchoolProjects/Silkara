@@ -2,7 +2,7 @@ namespace SilkaraServer.Infrastructure.Database;
 
 public class DatabaseConfig
 {
-    public string ConnectionString { get;}
+    public string ConnectionString { get; }
     private string DatabaseName { get; }
     private string DatabasePort { get; }
     private string DatabaseUser { get; }

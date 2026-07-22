@@ -13,12 +13,12 @@ public class UtpClientAdapter
 
     public UtpClientAdapter(UtpClient utpClient) => _utpClient = utpClient;
 
-    public async Task SendMessageAsync(IUtpMessage utpMessage, CancellationToken ct = default) 
+    public async Task SendMessageAsync(IUtpMessage utpMessage, CancellationToken ct = default)
         => await _utpClient.SendMessageAsync(utpMessage, ct);
-    
-    public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default) 
+
+    public async Task<IUtpMessage> ReceiveMessageAsync(CancellationToken ct = default)
         => await _utpClient.ReceiveMessageAsync(ct);
-    
+
     public async Task HandleMessageAsync(
         IUtpMessage rawMessage,
         UtpPipeline pipeline,

@@ -11,7 +11,7 @@ public static class UtpConstants
 
     public static class Delimiters
     {
-        public const char HeaderKeyValue = ':'; 
+        public const char HeaderKeyValue = ':';
     }
 
     public static class Headers
@@ -22,7 +22,7 @@ public static class UtpConstants
 
     public static class UtpConnectionConstants
     {
-        public const int  MinimumBufferSize = 512;
+        public const int MinimumBufferSize = 512;
         public const int MaxPacketSize = int.MaxValue;
     }
 }
