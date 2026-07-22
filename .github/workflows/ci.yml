@@ -28,6 +28,12 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore Silkara.sln
 
+    # 3.5 Security Scan (Snyk)
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/dotnet@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
     # 4. Check code formatting (Linter)
     # If the code isn't formatted using dotnet format, this step will fail and point out the errors.
     - name: Check formatting
